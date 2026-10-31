@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { formatCardDate } from '@/lib/utils'
 import type { PostSummary } from '@/types/post'
 
 interface PostCardListProps {
@@ -7,14 +8,6 @@ interface PostCardListProps {
   /** 日期格式化函数，默认为英文短日期（02 Oct 2026） */
   formatDate?: (iso: string) => string
   className?: string
-}
-
-/** 02 Oct 2026 —— 参考站的 date_to_string 格式 */
-export function formatCardDate(iso: string): string {
-  const d = new Date(iso)
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = d.toLocaleDateString('en-GB', { month: 'short' })
-  return `${day} ${month} ${d.getFullYear()}`
 }
 
 /**
@@ -33,9 +26,12 @@ export function PostCardList({ posts, formatDate = formatCardDate, className }: 
         <li
           key={post.id}
           className={cn(
-            'mb-8 list-none border-l-[15px] border-l-transparent',
+            // 参考站写法：静止时完全不声明 border-left，悬停时才给
+            // 15px solid。浏览器会在 border-width 0→15px 与颜色
+            // transparent→红 之间同时插值，红条是「长出来」的。
+            'mb-8 list-none',
             'mx-[2em] transition-all duration-300 ease-linear',
-            'hover:border-l-[var(--post-accent)] hover:pl-[30px]',
+            'hover:border-l-[15px] hover:border-l-[var(--post-accent)] hover:pl-[30px]',
           )}
         >
           <h2 className="m-0 mb-6 text-[26px] leading-[48px] font-bold">

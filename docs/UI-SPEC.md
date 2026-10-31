@@ -180,6 +180,7 @@
 - 支持 GFM 语法（表格、任务列表、删除线）
 - 代码块语法高亮（highlight.js `github.css` 主题，与 `prose` 样式叠加）
 - 显示：标题、发布日期、正文
+- 日期格式与列表一致（`formatCardDate`：`02 Oct 2026`）
 - 加载失败或文章不存在 → 重定向回 `/posts`
 
 ---
@@ -191,7 +192,9 @@
   - `PostDetail` ← 详情（含 `content_markdown`）
   - `PostStatus` = `'draft' | 'published'`（联合字面量，不用裸 `string`）
 - API 调用集中在 `src/lib/api.ts`，页面不直接 `fetch`
-- 通用工具（`cn`、`formatDate`）放 `src/lib/utils.ts`，不在页面间复制
+- 通用工具（`cn`、`formatCardDate`）放 `src/lib/utils.ts`，不在页面间复制
+- **日期格式全局统一**为 `02 Oct 2026`（`formatCardDate`），列表 / 详情 / 管理端共用。
+  月份用固定缩写表而非 `toLocaleDateString`——en-GB 下九月是 `Sept`（四字母），会撑宽布局。
 
 ---
 

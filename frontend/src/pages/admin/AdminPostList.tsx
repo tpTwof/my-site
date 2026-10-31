@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAdminPosts, deletePost } from '@/lib/api'
-import { formatDate } from '@/lib/utils'
+import { formatCardDate } from '@/lib/utils'
 import type { PostStatus, PostSummary } from '@/types/post'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -113,7 +113,7 @@ export default function AdminPostList() {
               </div>
               <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
                 <span className="truncate">/posts/{post.slug}</span>
-                <span className="shrink-0">{formatDate(post.created_at)}</span>
+                <span className="shrink-0">{formatCardDate(post.created_at)}</span>
               </div>
             </div>
 

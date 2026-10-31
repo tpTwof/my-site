@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { getPost } from '@/lib/api'
-import { formatDate } from '@/lib/utils'
+import { formatCardDate } from '@/lib/utils'
 import type { PostDetail as PostDetailData } from '@/types/post'
 
 export default function PostDetail() {
@@ -37,7 +37,7 @@ export default function PostDetail() {
       <header className="mb-8 border-b border-border pb-6">
         <h1 className="m-0 text-3xl font-bold tracking-tight">{post.title}</h1>
         <time className="mt-2 block text-sm text-muted-foreground">
-          {formatDate(post.created_at)}
+          {formatCardDate(post.created_at)}
         </time>
       </header>
 
