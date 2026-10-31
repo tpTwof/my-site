@@ -1,3 +1,14 @@
+/**
+ * [前端 · 页面] 路由 `/admin/posts` — 管理端文章列表。
+ *
+ * 含草稿；胶囊筛选（全部/已发布/草稿）、行悬停浮起、编辑/删除图标滑入。
+ * 一次拉取上限 50 篇，个人博客量级足够。
+ *
+ * 后端关联：
+ *   GET    /api/admin/posts?limit=&status=  → PostSummaryList（含草稿，无正文）
+ *   DELETE /api/admin/posts/{id}            → 204
+ * ⚠️ 管理端接口当前无鉴权，部署公网前必须补上。
+ */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'

@@ -1,3 +1,10 @@
+/**
+ * [前端 · 展示组件] 胶囊按钮，悬停时文字左移淡出、箭头从右滑入、背景色块撑满。
+ *
+ * 当前用于 `/` 入口页的「Enter」按钮。
+ *
+ * 后端关联：不请求接口。是否跳转由父组件通过 onClick 决定。
+ */
 import React from "react"
 import { ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"

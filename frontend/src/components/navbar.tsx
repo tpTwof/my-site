@@ -1,3 +1,12 @@
+/**
+ * [前端 · 布局组件] 全站顶部导航栏，除 `/` 入口页外所有页面共用。
+ *
+ * 左：站名 tpTwo（TextRoll 悬停动画），点击回 /home。
+ * 中：暂时留空，预留给每日一句 / 名人名言。
+ * 右：明暗主题切换。
+ *
+ * 后端关联：不请求接口。
+ */
 import { Link } from 'react-router-dom'
 import TextRoll from '@/components/ui/text-roll'
 import { ThemeToggle } from '@/components/theme-toggle'

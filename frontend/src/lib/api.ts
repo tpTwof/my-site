@@ -1,3 +1,12 @@
+/**
+ * [前端 · 数据层] 全部后端请求集中于此，页面不直接 fetch。
+ *
+ * 后端地址由 VITE_API_BASE 指定，默认 http://127.0.0.1:8000。
+ * 接口契约见 docs/API-SPEC.md。
+ *
+ * 后端关联：公开接口 /api/posts、/api/posts/{slug}；
+ *   管理接口 /api/admin/posts（CRUD）。管理端当前无鉴权。
+ */
 import type {
   PostCreate,
   PostDetail,

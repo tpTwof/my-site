@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件 / shadcn] 状态徽章。
+ *
+ * 用于管理端列表标注文章状态（已发布 / 草稿）。
+ *
+ * 后端关联：不请求接口。显示的是 PostSummary.status。
+ */
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"

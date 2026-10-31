@@ -1,3 +1,12 @@
+/**
+ * [前端 · 工具] 通用工具函数。
+ *
+ * - cn：合并 Tailwind 类名（shadcn 约定）
+ * - formatCardDate：ISO 时间戳 → `02 Oct 2026`，列表 / 详情 / 管理端共用
+ *
+ * 后端关联：不请求接口。处理的是后端返回的 created_at / updated_at
+ *   （ISO 8601 字符串）。
+ */
 export { cn } from "cn"
 
 const MONTHS = [

@@ -1,3 +1,11 @@
+/**
+ * [前端 · 全局上下文] 明暗主题状态，包裹整个应用（在 App.tsx 最外层）。
+ *
+ * 三态：light / dark / system（跟随系统）。切换时给 <html> 加/去 `dark` 类，
+ * shadcn 的 CSS 变量随之切换；选择写入 localStorage，刷新后保持。
+ *
+ * 后端关联：不请求接口。
+ */
 import { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'

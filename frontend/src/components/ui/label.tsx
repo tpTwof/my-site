@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件 / shadcn] 表单标签。
+ *
+ * 用于管理端写作页，为标题与 slug 输入框提供可点击的文字标签。
+ *
+ * 后端关联：不请求接口。
+ */
 import * as React from "react"
 import { cn } from "cn"
 

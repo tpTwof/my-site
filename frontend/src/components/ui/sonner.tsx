@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件] 全局 Toast 容器（sonner），挂载在 App.tsx 根部。
+ *
+ * 管理端保存/发布/删除成功与失败的提示都通过这里的 toast() 弹出。
+ *
+ * 后端关联：不请求接口；提示文案多来自后端响应（如 409 slug 冲突）。
+ */
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import {
   CircleCheckIcon,

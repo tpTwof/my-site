@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件 / shadcn] 多行文本框。
+ *
+ * 用作 SplitEditor 的 Markdown 源码输入区。
+ *
+ * 后端关联：不请求接口。内容作为 content_markdown 提交给 /api/admin/posts。
+ */
 import * as React from "react"
 import { cn } from "cn"
 

@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件 / shadcn] 按钮，基于 @base-ui/react。
+ *
+ * 用于管理端的各种操作按钮；导出的 buttonVariants 也被用来给 <Link> 套按钮样式。
+ *
+ * 后端关联：不请求接口。
+ */
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"

@@ -1,3 +1,13 @@
+/**
+ * [前端 · 类型] 文章相关的 TypeScript 类型，与后端 schema 一一对应。
+ *
+ * PostSummary ← backend/models/post.py::PostSummary（列表项，无正文）
+ * PostDetail  ← backend/models/post.py::PostDetail（详情，含 content_markdown）
+ * PostCreate / PostUpdate ← 同名请求体 schema
+ *
+ * 改后端 schema 时，这里必须同步，否则类型与运行时数据会脱节。
+ */
+
 /** 文章状态 */
 export type PostStatus = 'draft' | 'published'
 

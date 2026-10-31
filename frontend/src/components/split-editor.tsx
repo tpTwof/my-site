@@ -1,3 +1,10 @@
+/**
+ * [前端 · 组件] 管理端写作页的左右分栏编辑器：左 Markdown 源码，右实时预览。
+ *
+ * 仅在 /admin/posts/new 与 /admin/posts/:id/edit 使用。
+ *
+ * 后端关联：不请求接口——只管输入，保存由父页面调 POST/PUT /api/admin/posts。
+ */
 import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'

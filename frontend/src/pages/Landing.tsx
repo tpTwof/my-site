@@ -1,3 +1,11 @@
+/**
+ * [前端 · 页面] 路由 `/` — 站点入口页（Gate）。
+ *
+ * 全屏欢迎屏，无导航栏；点击 Enter 后进入 /home 首页导航。
+ * 目的：让第一屏是品牌表达而非内容列表。
+ *
+ * 后端关联：不请求接口。
+ */
 import { useNavigate } from 'react-router-dom'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 

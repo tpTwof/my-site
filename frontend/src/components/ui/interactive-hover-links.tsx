@@ -1,3 +1,11 @@
+/**
+ * [前端 · 展示组件] 全屏大标题导航列表，用于 `/home` 首页导航页。
+ *
+ * 悬停时整行左移、每个字母再右移（逐字错位），底边由 muted 变 foreground，
+ * 右侧箭头滑出。链接项由父组件通过 links 传入。
+ *
+ * 后端关联：不请求接口。href 均为站内路由（如 /posts、/admin/posts）。
+ */
 import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'

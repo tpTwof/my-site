@@ -1,3 +1,12 @@
+/**
+ * [前端 · 页面] 路由 `/posts` — 公开博客列表。
+ *
+ * 无限滚动（IntersectionObserver + 游标分页），只展示已发布文章。
+ * 列表项样式由 PostCardList 提供。
+ *
+ * 后端关联：GET /api/posts?cursor=&limit=
+ *   → { items: PostSummary[], next_cursor }；列表项不含正文，只有 summary 摘要。
+ */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getPosts, errorMessage } from '@/lib/api'
 import type { PostSummary } from '@/types/post'

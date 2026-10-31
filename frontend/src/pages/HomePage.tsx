@@ -1,3 +1,11 @@
+/**
+ * [前端 · 页面] 路由 `/home` — 站点首页导航页。
+ *
+ * 全屏大标题导航（Posts / Admin），带逐字位移与箭头滑入动效。
+ * 导航项在下方 HOME_LINKS 配置，加一项即自动渲染。
+ *
+ * 后端关联：不请求接口。未来若要展示站点简介，可接 GET /api/home。
+ */
 import { InteractiveHoverLinks } from '@/components/ui/interactive-hover-links'
 import type { HoverLink } from '@/components/ui/interactive-hover-links'
 

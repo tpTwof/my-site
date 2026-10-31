@@ -1,3 +1,12 @@
+/**
+ * [前端 · 页面] 路由 `/posts/:slug` — 公开文章详情。
+ *
+ * 用 react-markdown 渲染正文（GFM 表格/任务列表 + highlight.js 代码高亮）。
+ *
+ * 后端关联：GET /api/posts/{slug}
+ *   → PostDetail（含 content_markdown 正文）。
+ *   文章不存在或仍是草稿时后端返回 404，此处重定向回 /posts。
+ */
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'

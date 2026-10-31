@@ -1,3 +1,10 @@
+/**
+ * [前端 · 基础组件 / shadcn] 单行输入框。
+ *
+ * 用于管理端写作页的标题与 slug 字段。
+ *
+ * 后端关联：不请求接口。输入值最终随 POST/PUT /api/admin/posts 提交。
+ */
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 import { cn } from "cn"

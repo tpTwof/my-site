@@ -1,3 +1,17 @@
+/**
+ * [前端 · 页面] 路由 `/admin/posts/new` 与 `/admin/posts/:id/edit` — 新建 / 编辑文章。
+ *
+ * 两种模式共用本组件：有 :id 为编辑（先拉取再回填），无 :id 为新建。
+ * 正文用 SplitEditor 左右分栏（Markdown 源码 + 实时预览）。
+ * 新建保存成功后自动切到编辑路由，后续保存走 PUT，不会重复创建。
+ *
+ * 后端关联：
+ *   GET    /api/admin/posts/{id} → PostDetail（含正文），用于回填表单
+ *   POST   /api/admin/posts      → 201 PostDetail
+ *   PUT    /api/admin/posts/{id} → 200 PostDetail
+ *   slug 冲突时后端返回 409，此处以错误条 + toast 展示。
+ * ⚠️ 管理端接口当前无鉴权，部署公网前必须补上。
+ */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Save, Send } from 'lucide-react'

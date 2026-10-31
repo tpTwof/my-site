@@ -1,3 +1,10 @@
+/**
+ * [前端 · 展示组件] 逐字滚动文字，悬停时上下两行字母依次交错滑出/滑入。
+ *
+ * 当前用于导航栏的站名「tpTwo」。
+ *
+ * 后端关联：不请求接口。
+ */
 import { motion } from "motion/react"
 
 import { cn } from "@/lib/utils"

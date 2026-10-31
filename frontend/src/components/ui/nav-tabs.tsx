@@ -1,3 +1,12 @@
+/**
+ * [前端 · 展示组件] 胶囊式单选筛选器，当前用于 `/admin/posts` 的
+ * 「全部 / 已发布 / 草稿」状态筛选。
+ *
+ * 受控组件：父组件持有选中值。带跟随鼠标的弹簧滑块。
+ *
+ * 后端关联：不请求接口。选中值由父页面转成 `?status=` 传给
+ *   GET /api/admin/posts（'all' 表示不传 status）。
+ */
 import { useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'

@@ -1,3 +1,12 @@
+/**
+ * [前端 · 展示组件] 经典博客风格文章列表，用于 `/posts` 公开列表页。
+ *
+ * 每项：标题 → 日期 → 摘要 → 「阅读全文」，悬停时左侧红条由 0 增到 15px
+ * 且文字右移 30px。颜色走 --post-* CSS 变量（亮色等于参考站原值，暗色另覆盖）。
+ *
+ * 后端关联：不请求接口。接收父页面传入的 PostSummary[]（来自 GET /api/posts），
+ *   `summary` 为后端截取的 200 字摘要，列表项不含正文。
+ */
 import { Link } from 'react-router-dom'
 import { cn, formatCardDate } from '@/lib/utils'
 import type { PostSummary } from '@/types/post'
