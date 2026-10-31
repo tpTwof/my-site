@@ -184,19 +184,23 @@ function PostRow({
         </div>
       </div>
 
-      {/* 操作区：悬停时滑入，替代原组件的右箭头 */}
+      {/* 操作区：悬停时从右侧滑入，替代原组件的右箭头 */}
       <motion.div
-        className="flex shrink-0 items-center gap-1"
-        animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 16 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="flex shrink-0 items-center gap-2"
+        animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 32 }}
+        transition={{
+          // 位移用 0.3s 缓出，透明度稍快，避免滑动过程中半透明
+          x: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: 0.15, ease: 'linear' },
+        }}
       >
         <Link
           to={`/admin/posts/${post.id}/edit`}
           aria-label="编辑"
           title="编辑"
-          className={buttonVariants({ size: 'icon-sm', variant: 'ghost' })}
+          className={buttonVariants({ size: 'icon-lg', variant: 'ghost' })}
         >
-          <Pencil className="size-4" />
+          <Pencil className="size-5" />
         </Link>
         <button
           type="button"
@@ -205,11 +209,11 @@ function PostRow({
           disabled={deleting}
           onClick={onDelete}
           className={cn(
-            buttonVariants({ size: 'icon-sm', variant: 'ghost' }),
+            buttonVariants({ size: 'icon-lg', variant: 'ghost' }),
             'text-destructive hover:text-destructive disabled:opacity-50',
           )}
         >
-          <Trash2 className="size-4" />
+          <Trash2 className="size-5" />
         </button>
       </motion.div>
     </motion.li>
