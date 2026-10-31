@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAdminPosts, deletePost } from '@/lib/api'
 import { formatCardDate } from '@/lib/utils'
 import type { PostStatus, PostSummary } from '@/types/post'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { NavTabs } from '@/components/ui/nav-tabs'
+import type { NavTabItem } from '@/components/ui/nav-tabs'
+import { cn } from '@/lib/utils'
 
 type Filter = 'all' | PostStatus
 
-const FILTERS: { value: Filter; label: string }[] = [
+const FILTERS: NavTabItem<Filter>[] = [
   { value: 'all', label: '全部' },
   { value: 'published', label: '已发布' },
   { value: 'draft', label: '草稿' },
@@ -19,12 +23,16 @@ const FILTERS: { value: Filter; label: string }[] = [
 export default function AdminPostList() {
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [filter, setFilter] = useState<Filter>('all')
-  const [loading, setLoading] = useState(true)
+  /** 仅首次加载时为 true；之后切换过滤不卸载列表，避免页面高度跳动 */
+  const [initialLoading, setInitialLoading] = useState(true)
+  /** 切换过滤时的轻提示，不改变列表布局 */
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const hasLoadedOnce = useRef(false)
 
   const load = useCallback(async (nextFilter: Filter) => {
-    setLoading(true)
+    if (hasLoadedOnce.current) setRefreshing(true)
     setError(null)
     try {
       // 分页上限 50；个人博客文章量在合理范围内可一次拉全
@@ -37,13 +45,27 @@ export default function AdminPostList() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载失败')
     } finally {
-      setLoading(false)
+      hasLoadedOnce.current = true
+      setInitialLoading(false)
+      setRefreshing(false)
     }
   }, [])
 
   useEffect(() => {
     load(filter)
   }, [filter, load])
+
+  /**
+   * 切换过滤时回到顶部。
+   *
+   * 过滤后条目数不同（如 9 篇 → 1 篇），列表高度骤减时浏览器会强制把
+   * scrollY 回滚，表现为页面「震一下」。显式滚动让这个变化变成可预期的行为。
+   */
+  function changeFilter(next: Filter) {
+    if (next === filter) return
+    setFilter(next)
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   async function handleDelete(post: PostSummary) {
     if (!confirm(`确认删除《${post.title}》？此操作不可恢复。`)) return
@@ -74,18 +96,7 @@ export default function AdminPostList() {
         </Link>
       </header>
 
-      <div className="flex gap-2">
-        {FILTERS.map(({ value, label }) => (
-          <Button
-            key={value}
-            size="sm"
-            variant={filter === value ? 'default' : 'outline'}
-            onClick={() => setFilter(value)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <NavTabs items={FILTERS} value={filter} onChange={changeFilter} />
 
       {error && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -93,52 +104,114 @@ export default function AdminPostList() {
         </p>
       )}
 
-      {loading && <p className="py-16 text-center text-sm text-muted-foreground">加载中...</p>}
+      {initialLoading && (
+        <p className="py-16 text-center text-sm text-muted-foreground">加载中...</p>
+      )}
 
-      {!loading && posts.length === 0 && !error && (
+      {!initialLoading && posts.length === 0 && !error && (
         <p className="py-16 text-center text-sm text-muted-foreground">
           还没有文章，点右上角「新建文章」开始写吧。
         </p>
       )}
 
-      <ul className="m-0 divide-y divide-border rounded-xl border border-border p-0">
+      <ul
+        className={cn(
+          'm-0 list-none p-0 transition-opacity',
+          refreshing && 'opacity-50',
+        )}
+      >
         {posts.map((post) => (
-          <li key={post.id} className="flex items-center gap-4 px-5 py-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-medium">{post.title}</span>
-                <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-                  {post.status === 'published' ? '已发布' : '草稿'}
-                </Badge>
-              </div>
-              <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
-                <span className="truncate">/posts/{post.slug}</span>
-                <span className="shrink-0">{formatCardDate(post.created_at)}</span>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 gap-1">
-              <Link
-                to={`/admin/posts/${post.id}/edit`}
-                className={buttonVariants({ size: 'sm', variant: 'ghost' })}
-              >
-                <Pencil className="size-3.5" />
-                编辑
-              </Link>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                disabled={deletingId === post.id}
-                onClick={() => handleDelete(post)}
-              >
-                <Trash2 className="size-3.5" />
-                {deletingId === post.id ? '删除中' : '删除'}
-              </Button>
-            </div>
-          </li>
+          <PostRow
+            key={post.id}
+            post={post}
+            deleting={deletingId === post.id}
+            onDelete={() => handleDelete(post)}
+          />
         ))}
       </ul>
     </div>
+  )
+}
+
+function PostRow({
+  post,
+  deleting,
+  onDelete,
+}: {
+  post: PostSummary
+  deleting: boolean
+  onDelete: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <motion.li
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      animate={{
+        y: hovered ? -2 : 0,
+        backgroundColor: hovered ? 'var(--card)' : 'transparent',
+        boxShadow: hovered
+          ? '0 10px 40px -10px rgba(0,0,0,0.15), 0 2px 10px -2px rgba(0,0,0,0.08)'
+          : '0 0 0 0 transparent',
+      }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="relative flex items-center gap-4 rounded-xl px-5 py-4"
+    >
+      {/* 分隔线：悬停时淡出，由卡片阴影接替 */}
+      <motion.div
+        className="absolute inset-x-5 bottom-0 h-px bg-border"
+        animate={{ opacity: hovered ? 0 : 1 }}
+        transition={{ duration: 0.3 }}
+      />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <motion.span
+            className="truncate text-lg font-semibold"
+            animate={{ color: hovered ? 'var(--foreground)' : 'var(--muted-foreground)' }}
+            transition={{ duration: 0.3 }}
+          >
+            {post.title}
+          </motion.span>
+          <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+            {post.status === 'published' ? '已发布' : '草稿'}
+          </Badge>
+        </div>
+        <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+          <span className="truncate">/posts/{post.slug}</span>
+          <span className="shrink-0">{formatCardDate(post.created_at)}</span>
+        </div>
+      </div>
+
+      {/* 操作区：悬停时滑入，替代原组件的右箭头 */}
+      <motion.div
+        className="flex shrink-0 items-center gap-1"
+        animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 16 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
+        <Link
+          to={`/admin/posts/${post.id}/edit`}
+          aria-label="编辑"
+          title="编辑"
+          className={buttonVariants({ size: 'icon-sm', variant: 'ghost' })}
+        >
+          <Pencil className="size-4" />
+        </Link>
+        <button
+          type="button"
+          aria-label="删除"
+          title="删除"
+          disabled={deleting}
+          onClick={onDelete}
+          className={cn(
+            buttonVariants({ size: 'icon-sm', variant: 'ghost' }),
+            'text-destructive hover:text-destructive disabled:opacity-50',
+          )}
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </motion.div>
+    </motion.li>
   )
 }

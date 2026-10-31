@@ -79,10 +79,38 @@
 ### 文章列表 (`/admin/posts`)
 
 - 顶部：标题「文章管理」+ 总数 + 「新建文章」按钮
-- 过滤按钮组：全部 / 已发布 / 草稿（对应 `?status=` 参数）
-- 每条显示：标题、状态徽章、`/posts/{slug}`、创建日期、编辑/删除按钮
+- 过滤栏：**NavTabs 胶囊导航**（`src/components/ui/nav-tabs.tsx`），居中
+  - 全部 / 已发布 / 草稿，对应 `?status=` 参数
+  - 滑块跟随鼠标，无悬停时停在当前选中项
+  - 被滑块覆盖的 Tab 文字切到 `text-background`（亮色：黑底白字；暗色：白底黑字）
+  - **不使用 `mix-blend-difference`**：受控组件本就知道当前项，直接切色更可靠，暗色也自洽
+- 列表项（悬停浮起样式，与博客列表的「卡片浮起」一致）：
+  - 标题 `text-lg font-semibold`，静止时 `text-muted-foreground`，悬停变 `text-foreground`
+  - 状态下徽章（已发布 / 草稿）
+  - 副行：`/posts/{slug}` + 英文短日期
+  - 悬停：上浮 2px + `var(--card)` 背景 + 阴影，分隔线淡出
+  - **操作区**：编辑 / 删除**图标按钮**（无文字），悬停时从右侧滑入（`opacity 0→1`，`x 16→0`）
+  - 原组件的右侧箭头由此操作区替代
 - 删除前 `confirm()` 二次确认
-- 一次拉取上限 50 篇（个人博客量级够用）；超过后需改成分页
+- 一次拉取上限 50 篇；超过后需改成分页
+- **切换过滤时回到顶部**：过滤后条目数不同（如 9 篇 → 1 篇），列表高度骤减会让
+  浏览器强制回滚 `scrollY`，表现为页面抖动；此处显式 `window.scrollTo(0, 0)`，
+  让行为可预期
+- 切换过滤期间：`initialLoading` 只用于首次加载；后续切换用 `refreshing`（列表降透明度），
+  不卸载列表
+
+### NavTabs 组件说明
+
+参考实现来自 `docs/design/导航栏标题.md`，做了以下适配：
+
+| 参考实现 | 本项目 |
+|---|---|
+| `framer-motion` | `motion/react`（项目已装） |
+| `mix-blend-difference` + 硬编码黑白 | 滑块 `bg-foreground`，文字按覆盖状态切 `text-background` |
+| 写死 5 个 Tab | 受控组件 `items` / `value` / `onChange` |
+| `setPosition: any` | 显式 `CursorState` 类型 |
+| 鼠标移开滑块消失 | 移开后滑块停回当前选中项 |
+| `"use client"` | 删除（Vite 无此指令） |
 
 ### 新建 / 编辑 (`/admin/posts/new`、`/admin/posts/:id/edit`)
 
