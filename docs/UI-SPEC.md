@@ -18,12 +18,52 @@
 | `/home` | 站点主页 | ✅ 有 | tpTwo 主页（暂为占位，后续放个人介绍/板块入口） |
 | `/posts` | 博客列表 | ✅ 有 | 已发布文章列表，无限滚动 |
 | `/posts/:slug` | 文章详情 | ✅ 有 | Markdown 渲染 |
+| `/admin/posts` | 文章管理列表 | ✅ 有 | 含草稿，可过滤/编辑/删除 |
+| `/admin/posts/new` | 新建文章 | ✅ 有 | 分栏编辑器 |
+| `/admin/posts/:id/edit` | 编辑文章 | ✅ 有 | 分栏编辑器 |
 
 > **入口页的语义**：`/` 是站点的「前置欢迎屏」，不是主页。用户必须点击
 > Enter 按钮才进入正文站点（`/home`）。这样首页第一屏是品牌表达而非内容列表。
 >
 > **新增页面时**：默认都有导航栏；只有 `/` 例外（由 `AppLayout` 中的
 > `isLanding` 判断控制）。
+
+### 页面宽度
+
+由 `AppLayout` 按路由分配，页面自己不再重复写宽度类：
+
+| 路由 | 宽度 |
+|------|------|
+| `/` | 无约束（Landing 自行全屏居中） |
+| `/admin/posts/{id}/edit`、`/admin/posts/new` | `max-w-[1400px]`（分栏编辑器需要宽度） |
+| 其余 | `max-w-5xl` (1024px) |
+
+---
+
+## 管理端 (`/admin/posts`)
+
+> ⚠️ **当前无鉴权**。部署到公网前必须加上身份验证，否则任何人可增删文章。
+
+### 文章列表 (`/admin/posts`)
+
+- 顶部：标题「文章管理」+ 总数 + 「新建文章」按钮
+- 过滤按钮组：全部 / 已发布 / 草稿（对应 `?status=` 参数）
+- 每条显示：标题、状态徽章、`/posts/{slug}`、创建日期、编辑/删除按钮
+- 删除前 `confirm()` 二次确认
+- 一次拉取上限 50 篇（个人博客量级够用）；超过后需改成分页
+
+### 新建 / 编辑 (`/admin/posts/new`、`/admin/posts/:id/edit`)
+
+- 顶部操作栏：返回、标题、状态提示、「查看」、保存草稿、发布
+- 表单：标题（必填）、Slug（留空自动生成，placeholder 显示自动结果）
+- 正文：**SplitEditor 组件**（`src/components/split-editor.tsx`）
+  - 左：Markdown 源码（`<textarea>`，等宽字体）
+  - 右：实时预览（复用 `react-markdown` + `remark-gfm` + `rehype-highlight`）
+  - 滚动按**比例**双向同步（rAF 节流，防止两边 scroll 事件互相触发）
+- 「保存草稿」→ `status: "draft"`；「发布」→ `status: "published"`
+- 新建成功后自动切到 `/admin/posts/{id}/edit`（replace），后续保存走 PUT
+- 有未保存改动时，关闭/刷新页面触发 `beforeunload` 拦截
+- 错误（如 slug 冲突 409）以红色提示条展示
 
 ---
 
@@ -43,8 +83,10 @@
   - TextRoll 依赖 `motion/react`（Framer Motion）
   - 注意 `lineHeight` 需 ≥ 1.1，否则 `overflow-hidden` 会裁掉 p/g/y 等字母的下伸部分
 - **右侧**:
-  - `Posts` 链接 → 跳转 `/posts`
+  - `Posts` 链接 → `/posts`
+  - `Admin` 链接 → `/admin/posts`
   - 暗色模式切换按钮（🌙/☀️ 图标）
+  - 当前页面的链接以 `text-foreground font-medium` 高亮（`NavLink` 的 `isActive`）
 - **预留**: 未来扩展导航项（关于、简历等）的空间
 
 ---
@@ -88,8 +130,9 @@
 
 ## 待后续实现
 
-- 管理后台页面（创建 / 编辑 / 文章列表）
+- 🔒 **管理端鉴权**（上线前必须完成）：单账号登录 + token 校验，保护 `/api/admin/*`
 - 站点主页 `/home` 的实际内容
 - 关于页 / 简历页
 - 更多导航项
 - 标签 / 分类筛选
+- 大 chunk 拆分（`highlight.js` 目前被打进主包）

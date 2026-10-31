@@ -1,6 +1,11 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import TextRoll from '@/components/ui/text-roll'
 import { ThemeToggle } from '@/components/theme-toggle'
+
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  `text-sm transition-colors ${
+    isActive ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
+  }`
 
 export function Navbar() {
   return (
@@ -11,12 +16,12 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-6">
-          <Link
-            to="/posts"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <NavLink to="/posts" className={linkClass}>
             Posts
-          </Link>
+          </NavLink>
+          <NavLink to="/admin/posts" className={linkClass}>
+            Admin
+          </NavLink>
           <ThemeToggle />
         </nav>
       </div>
