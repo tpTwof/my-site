@@ -154,7 +154,7 @@
 - **悬停效果**：
   1. 左侧 15px 红色竖条从透明显现（`border-l-transparent` → `border-l-[var(--post-accent)]`）
   2. 文字区右移 30px（`hover:pl-[30px]`）
-  3. 过渡 `duration-300 ease-out`（参考站为 `linear`，匀速偏生硬，此处改为缓出）
+  3. 过渡 `duration-300 ease-linear`（与参考站一致，匀速）
 - **配色走 CSS 变量**：亮色值等于参考站原值，暗色在 `index.css` 的 `.dark` 中覆盖
 
 | 变量 | 亮色 | 用途 |

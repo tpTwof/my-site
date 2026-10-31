@@ -24,7 +24,7 @@ export function formatCardDate(iso: string): string {
  * 亮色模式下与参考站完全一致，暗色模式只改 `index.css` 里的变量值。
  *
  * 悬停：左侧红色竖条从透明显形（15px），同时文字区右移 30px。
- * 参考站用的是 `linear` 匀速过渡，显得生硬，这里改为 `ease-out`。
+ * 过渡为 `linear` 匀速，与参考站一致。
  */
 export function PostCardList({ posts, formatDate = formatCardDate, className }: PostCardListProps) {
   return (
@@ -34,7 +34,7 @@ export function PostCardList({ posts, formatDate = formatCardDate, className }: 
           key={post.id}
           className={cn(
             'mb-8 list-none border-l-[15px] border-l-transparent',
-            'mx-[2em] transition-all duration-300 ease-out',
+            'mx-[2em] transition-all duration-300 ease-linear',
             'hover:border-l-[var(--post-accent)] hover:pl-[30px]',
           )}
         >
