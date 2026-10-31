@@ -138,18 +138,39 @@
 
 ## 博客列表页 (`/posts`)
 
-- 使用 **InteractiveHoverList** 组件（`src/components/ui/interactive-hover-list.tsx`）
-  —— 注意与首页的 `interactive-hover-links` 是两个不同组件
-- 每项显示：大号粗体标题 + 发布日期（副标题位置）
-- **静态**: 浅灰标题、细灰分隔线、低对比度
-- **悬停效果**:
-  1. 卡片浮起（白底 + 圆角 + 阴影 + 上浮 2px）
-  2. 分隔线淡出
-  3. 文字由浅灰变纯黑
-  4. 箭头从右侧滑入并左移 70px
+- 使用 **PostCardList**（`src/components/ui/post-card-list.tsx`），经典博客风格
+- 样式取自一份 Jekyll 主题参考站，**以本项目为准做了裁剪**：
+  - 类型用 `PostSummary`（后端真实字段），不是参考站的 `Post`
+  - 链接用 React Router `<Link to>`，不是 `<a href>`（避免整页刷新）
+  - 删除 `Paginator`：分页由外层 `Posts.tsx` 的无限滚动负责
+  - 删除 `"use client"`、`forwardRef`、`category`（均无效或未使用）
+- 每项结构：
+  1. 主标题 `text-[26px] leading-[48px] font-bold`，链接色 `--post-link`
+  2. 日期 `02 Oct 2026` 英文短格式，色 `--post-muted`
+  3. `<hr>` 分隔线
+  4. 摘要（后端 `summary` 字段），色 `--post-body`
+  5. 「阅读全文 »」链接
+  6. `<hr>` 分隔线
+- **悬停效果**：
+  1. 左侧 15px 红色竖条从透明显现（`border-l-transparent` → `border-l-[var(--post-accent)]`）
+  2. 文字区右移 30px（`hover:pl-[30px]`）
+  3. 过渡 `duration-300 ease-out`（参考站为 `linear`，匀速偏生硬，此处改为缓出）
+- **配色走 CSS 变量**：亮色值等于参考站原值，暗色在 `index.css` 的 `.dark` 中覆盖
+
+| 变量 | 亮色 | 用途 |
+|------|------|------|
+| `--post-link` | `#1122cc` | 标题 / 阅读全文链接 |
+| `--post-link-hover` | `#333366` | 链接悬停 |
+| `--post-accent` | `#ce2323` | 左侧红条 |
+| `--post-muted` | `#8d8d8d` | 日期 |
+| `--post-body` | `#000000` | 摘要正文 |
+| `--post-rule` | `#eeeeee` | 分隔线 |
+
+> ⚠️ 暗色模式下的 `--post-*` 目前是临时值（需保证深底上的对比度），待定稿。
+
 - **分页**: 无限滚动（游标分页），滚动到底部自动加载更多
 - **数据**: 仅展示 `status = "published"`，列表项不含正文（用 `summary` 字段）
-- 点击条目 → 跳转 `/posts/:slug`
+- 点击标题或「阅读全文」→ 跳转 `/posts/:slug`
 
 ---
 

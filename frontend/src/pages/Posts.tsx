@@ -1,22 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getPosts } from '@/lib/api'
-import { formatDate } from '@/lib/utils'
 import type { PostSummary } from '@/types/post'
-import InteractiveHoverList from '@/components/ui/interactive-hover-list'
-import type { HoverListItem } from '@/components/ui/interactive-hover-list'
-
-function toHoverItem(post: PostSummary): HoverListItem {
-  return {
-    id: post.id,
-    title: post.title,
-    subtitle: formatDate(post.created_at),
-    href: `/posts/${post.slug}`,
-  }
-}
+import { PostCardList } from '@/components/ui/post-card-list'
 
 export default function Posts() {
-  const navigate = useNavigate()
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const [hasMore, setHasMore] = useState(true)
@@ -29,7 +16,7 @@ export default function Posts() {
     loadingRef.current = true
     try {
       const data = await getPosts(cursor)
-      // 去重：游标分页在并发插入时可能返回重复条目
+      // 游标分页在并发插入时可能返回重复条目，按 id 去重
       setPosts((prev) => {
         const seen = new Set(prev.map((p) => p.id))
         return [...prev, ...data.items.filter((p) => !seen.has(p.id))]
@@ -64,10 +51,7 @@ export default function Posts() {
 
   return (
     <div>
-      <InteractiveHoverList
-        items={posts.map(toHoverItem)}
-        onItemClick={(item) => item.href && navigate(item.href)}
-      />
+      <PostCardList posts={posts} />
 
       <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
         {error && <span className="text-destructive">{error}</span>}
