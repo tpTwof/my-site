@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { getAdminPosts, deletePost } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import type { PostStatus, PostSummary } from '@/types/post'
@@ -50,8 +51,11 @@ export default function AdminPostList() {
     try {
       await deletePost(post.id)
       setPosts((prev) => prev.filter((p) => p.id !== post.id))
+      toast.success('已删除', { description: `《${post.title}》` })
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除失败')
+      const message = err instanceof Error ? err.message : '删除失败'
+      setError(message)
+      toast.error('删除失败', { description: message })
     } finally {
       setDeletingId(null)
     }

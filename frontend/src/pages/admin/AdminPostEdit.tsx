@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Save, Send } from 'lucide-react'
+import { toast } from 'sonner'
 import { createPost, getAdminPost, updatePost } from '@/lib/api'
 import type { PostStatus } from '@/types/post'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -83,6 +84,7 @@ export default function AdminPostEdit() {
   async function save(status: PostStatus) {
     if (!form.title.trim()) {
       setError('标题不能为空')
+      toast.error('标题不能为空')
       return
     }
     setSaving(true)
@@ -103,13 +105,30 @@ export default function AdminPostEdit() {
         content: saved.content_markdown,
         status: saved.status,
       })
+
+      if (saved.status === 'published') {
+        toast.success('已发布', {
+          description: `读者现在可以在 /posts/${saved.slug} 看到这篇文章`,
+          action: {
+            label: '查看',
+            onClick: () => window.open(`/posts/${saved.slug}`, '_blank'),
+          },
+        })
+      } else {
+        toast.success('草稿已保存', {
+          description: '只有你能看到，发布后才会出现在文章列表',
+        })
+      }
+
       // 新建成功后切到编辑模式，后续保存走 PUT
       if (!isEdit) {
         skipFetchFor.current = saved.id
         navigate(`/admin/posts/${saved.id}/edit`, { replace: true })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存失败')
+      const message = err instanceof Error ? err.message : '保存失败'
+      setError(message)
+      toast.error('保存失败', { description: message })
     } finally {
       setSaving(false)
     }

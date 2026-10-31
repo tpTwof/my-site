@@ -63,7 +63,23 @@
 - 「保存草稿」→ `status: "draft"`；「发布」→ `status: "published"`
 - 新建成功后自动切到 `/admin/posts/{id}/edit`（replace），后续保存走 PUT
 - 有未保存改动时，关闭/刷新页面触发 `beforeunload` 拦截
-- 错误（如 slug 冲突 409）以红色提示条展示
+- 错误（如 slug 冲突 409）以红色提示条 + toast 展示
+
+### 操作反馈（Toast）
+
+使用 `sonner`（`src/components/ui/sonner.tsx`），已从 `next-themes` 改为读取本项目的 `ThemeProvider`。
+挂载在 `App` 内部（`<Toaster position="bottom-right" richColors closeButton />`）。
+
+| 场景 | 提示 |
+|------|------|
+| 保存草稿 | 「草稿已保存」+ 说明「只有你能看到，发布后才会出现在文章列表」 |
+| 发布 | 「已发布」+ 文章路径，附「查看」按钮（新标签页打开） |
+| 删除 | 「已删除」+ 文章标题 |
+| 保存/删除失败 | 「保存失败」/「删除失败」+ 后端返回的具体原因 |
+| 标题为空 | 「标题不能为空」 |
+
+> 保存后**停留在编辑页**（不跳回列表），因为发布后常需回头微调；
+> 反馈由 toast 承担，而非通过页面跳转暗示成功。
 
 ---
 

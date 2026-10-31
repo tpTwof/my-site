@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/navbar'
+import { Toaster } from '@/components/ui/sonner'
 import Landing from '@/pages/Landing'
 import HomePage from '@/pages/HomePage'
 import Posts from '@/pages/Posts'
@@ -32,6 +33,7 @@ function AppLayout() {
           <Route path="/admin/posts/:id/edit" element={<AdminPostEdit />} />
         </Routes>
       </main>
+      <Toaster position="bottom-right" richColors closeButton />
     </div>
   )
 }
