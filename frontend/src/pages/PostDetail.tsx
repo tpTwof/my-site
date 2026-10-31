@@ -5,21 +5,13 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { getPost } from '@/lib/api'
-import type { Post } from '@/types/post'
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
+import { formatDate } from '@/lib/utils'
+import type { PostDetail as PostDetailData } from '@/types/post'
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const [post, setPost] = useState<Post | null>(null)
+  const [post, setPost] = useState<PostDetailData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,7 +21,7 @@ export default function PostDetail() {
       .then(setPost)
       .catch((err) => {
         console.error(err)
-        navigate('/', { replace: true })
+        navigate('/posts', { replace: true })
       })
       .finally(() => setLoading(false))
   }, [slug, navigate])
@@ -50,11 +42,8 @@ export default function PostDetail() {
       </header>
 
       <div className="prose prose-neutral max-w-none dark:prose-invert">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
-        >
-          {post.content_markdown ?? ''}
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+          {post.content_markdown}
         </ReactMarkdown>
       </div>
     </article>

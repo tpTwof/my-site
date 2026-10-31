@@ -1,32 +1,46 @@
-/** 与后端 PostResponse 对应 */
-export interface Post {
+/** 文章状态 */
+export type PostStatus = 'draft' | 'published'
+
+/** 列表项 —— 对应后端 PostSummary，不含正文 */
+export interface PostSummary {
   id: string
   slug: string
   title: string
-  content_markdown: string | null
-  status: 'draft' | 'published'
+  summary: string
+  status: PostStatus
   created_at: string
   updated_at: string
 }
 
-/** 与后端 PostListResponse 对应 */
-export interface PostListResponse {
-  items: Post[]
+/** 详情 —— 对应后端 PostDetail，含完整 Markdown 正文 */
+export interface PostDetail {
+  id: string
+  slug: string
+  title: string
+  content_markdown: string
+  status: PostStatus
+  created_at: string
+  updated_at: string
+}
+
+/** 列表响应 —— 对应后端 PostSummaryList */
+export interface PostSummaryList {
+  items: PostSummary[]
   next_cursor: string | null
 }
 
-/** 与后端 PostCreate 对应 */
+/** 对应后端 PostCreate */
 export interface PostCreate {
   title: string
   slug?: string
   content_markdown?: string
-  status?: 'draft' | 'published'
+  status?: PostStatus
 }
 
-/** 与后端 PostUpdate 对应 */
+/** 对应后端 PostUpdate */
 export interface PostUpdate {
   title?: string
   slug?: string
   content_markdown?: string
-  status?: 'draft' | 'published'
+  status?: PostStatus
 }

@@ -1,4 +1,4 @@
-# 前端展示规范
+# tpTwo 前端展示规范
 
 ## 视觉风格
 
@@ -6,35 +6,90 @@
 - **配色**: 浅色为主（白底黑字）+ 自动暗色模式（跟随系统 `prefers-color-scheme`）+ 手动切换按钮
 - **布局宽度**: `max-w-5xl` (1024px)，水平居中
 - **组件库**: shadcn/ui + Tailwind CSS v4
+- **技术栈**: Vite + React + TypeScript
+
+---
+
+## 路由结构
+
+| 路由 | 页面 | 导航栏 | 说明 |
+|------|------|--------|------|
+| `/` | 入口页（Gate） | ❌ 无 | 全屏欢迎页，前置引导，点击 Enter 进入站点 |
+| `/home` | 站点主页 | ✅ 有 | tpTwo 主页（暂为占位，后续放个人介绍/板块入口） |
+| `/posts` | 博客列表 | ✅ 有 | 已发布文章列表，无限滚动 |
+| `/posts/:slug` | 文章详情 | ✅ 有 | Markdown 渲染 |
+
+> **入口页的语义**：`/` 是站点的「前置欢迎屏」，不是主页。用户必须点击
+> Enter 按钮才进入正文站点（`/home`）。这样首页第一屏是品牌表达而非内容列表。
+>
+> **新增页面时**：默认都有导航栏；只有 `/` 例外（由 `AppLayout` 中的
+> `isLanding` 判断控制）。
+
+---
+
+## 入口页 (`/`)
+
+- 无导航栏，全屏居中
+- 大标题 `Welcome to tpTwo`
+- **InteractiveHoverButton** 组件（参考 `docs/design/交互式悬停按钮.md`）：
+  文字 "Enter"，悬停时文字左移淡出、箭头从右侧滑入、背景色块从一点扩散铺满
+- 点击 → 跳转 `/home`
+
+---
 
 ## 导航栏
 
-- **站名**: "tpTwo"，使用 TextRoll 组件（悬停时字母依次上下滑动动画）
-- **右侧**: 暗色模式切换按钮（🌙/☀️ 图标）
+- **左侧站名**: "tpTwo"，使用 TextRoll 组件（悬停时字母依次上下滑动动画），点击跳转 `/home`
+  - TextRoll 依赖 `motion/react`（Framer Motion）
+  - 注意 `lineHeight` 需 ≥ 1.1，否则 `overflow-hidden` 会裁掉 p/g/y 等字母的下伸部分
+- **右侧**:
+  - `Posts` 链接 → 跳转 `/posts`
+  - 暗色模式切换按钮（🌙/☀️ 图标）
 - **预留**: 未来扩展导航项（关于、简历等）的空间
-- TextRoll 依赖: `motion/react`（Framer Motion）
 
-## 页面结构
+---
 
-### 首页 (`/`) — 文章列表
+## 博客列表页 (`/posts`)
 
-- 使用 InteractiveHoverList 组件（参考 `docs/design/交互式悬停列表.md`）
-- 每项显示：大号粗体标题 + 发布日期
-- **悬停效果**: 卡片浮起（白底 + 圆角 + 阴影 + 上浮 2px）、分隔线淡出、文字变黑、箭头向左滑出 70px
-- **分页**: 无限滚动（游标分页），下拉自动加载更多
-- 仅展示 `status = "published"` 的文章
-- 点击跳转到 `/posts/:slug` 详情页
+- 使用 **InteractiveHoverList** 组件（参考 `docs/design/交互式悬停列表.md`）
+- 每项显示：大号粗体标题 + 发布日期（副标题位置）
+- **静态**: 浅灰标题、细灰分隔线、低对比度
+- **悬停效果**:
+  1. 卡片浮起（白底 + 圆角 + 阴影 + 上浮 2px）
+  2. 分隔线淡出
+  3. 文字由浅灰变纯黑
+  4. 箭头从右侧滑入并左移 70px
+- **分页**: 无限滚动（游标分页），滚动到底部自动加载更多
+- **数据**: 仅展示 `status = "published"`，列表项不含正文（用 `summary` 字段）
+- 点击条目 → 跳转 `/posts/:slug`
 
-### 文章详情页 (`/posts/:slug`)
+---
+
+## 文章详情页 (`/posts/:slug`)
 
 - Markdown 渲染: `react-markdown` + `remark-gfm` + `rehype-highlight`
 - 支持 GFM 语法（表格、任务列表、删除线）
-- 代码块语法高亮
-- 显示标题、发布日期、正文
+- 代码块语法高亮（highlight.js `github.css` 主题，与 `prose` 样式叠加）
+- 显示：标题、发布日期、正文
+- 加载失败或文章不存在 → 重定向回 `/posts`
+
+---
+
+## 数据层约定
+
+- 类型定义集中在 `src/types/post.ts`，与后端 schema 一一对应：
+  - `PostSummary` ← 列表项（无正文）
+  - `PostDetail` ← 详情（含 `content_markdown`）
+  - `PostStatus` = `'draft' | 'published'`（联合字面量，不用裸 `string`）
+- API 调用集中在 `src/lib/api.ts`，页面不直接 `fetch`
+- 通用工具（`cn`、`formatDate`）放 `src/lib/utils.ts`，不在页面间复制
+
+---
 
 ## 待后续实现
 
-- 管理后台页面（创建/编辑/文章列表）
+- 管理后台页面（创建 / 编辑 / 文章列表）
+- 站点主页 `/home` 的实际内容
 - 关于页 / 简历页
 - 更多导航项
-- 标签/分类筛选
+- 标签 / 分类筛选
