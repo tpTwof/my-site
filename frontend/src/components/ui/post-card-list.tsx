@@ -1,12 +1,9 @@
 import { Link } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { formatCardDate } from '@/lib/utils'
+import { cn, formatCardDate } from '@/lib/utils'
 import type { PostSummary } from '@/types/post'
 
 interface PostCardListProps {
   posts: PostSummary[]
-  /** 日期格式化函数，默认为英文短日期（02 Oct 2026） */
-  formatDate?: (iso: string) => string
   className?: string
 }
 
@@ -19,7 +16,7 @@ interface PostCardListProps {
  * 悬停：左侧红色竖条从透明显形（15px），同时文字区右移 30px。
  * 过渡为 `linear` 匀速，与参考站一致。
  */
-export function PostCardList({ posts, formatDate = formatCardDate, className }: PostCardListProps) {
+export function PostCardList({ posts, className }: PostCardListProps) {
   return (
     <ul className={cn('m-0 list-none p-0', className)}>
       {posts.map((post) => (
@@ -47,7 +44,7 @@ export function PostCardList({ posts, formatDate = formatCardDate, className }: 
           </h2>
 
           <span className="my-2 block text-[var(--post-muted)]">
-            {formatDate(post.created_at)}
+            {formatCardDate(post.created_at)}
           </span>
 
           <hr className="my-3 border-t border-[var(--post-rule)]" />

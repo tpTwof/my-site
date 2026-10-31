@@ -65,7 +65,13 @@ def list_admin(
     limit: int,
     status: PostStatus | None = None,
 ) -> PostSummaryList:
-    """管理列表：含草稿，按 created_at 倒序（同时间戳时用 id 兜底排序）。"""
+    """管理列表：含草稿，按 created_at 倒序。
+
+    NOTE: 游标只有 created_at，没有次级排序键。若两篇文章 created_at 完全
+    相同，翻页时会一起被 ``created_at < cursor`` 跳过而漏掉。当前通过 HTTP
+    接口创建时时间戳精确到微秒，实际不会撞；批量导入等场景需要改成
+    (created_at, id) 复合游标。
+    """
     rows, next_cursor = paginate(
         session,
         Post,
@@ -83,10 +89,27 @@ def list_admin(
 # ──────────────────────────────────────────────
 # 写入
 # ──────────────────────────────────────────────
+class SlugTaken(Exception):
+    """用户显式指定的 slug 已被占用。由 router 映射为 409。"""
+
+
 def create(session: Session, payload: PostCreate) -> Post:
+    """创建文章。
+
+    slug 撞车时的行为按来源区分（与 API-SPEC 一致）：
+    - 用户显式指定 → 抛 SlugTaken，router 转 409，绝不静默改名
+    - 由标题自动生成 → 追加随机后缀，保证写入成功
+    """
+    if payload.slug:
+        if get_by_slug(session, payload.slug):
+            raise SlugTaken(payload.slug)
+        slug = payload.slug
+    else:
+        slug = _unique_slug(session, slugify(payload.title))
+
     now = utcnow()
     post = Post(
-        slug=_unique_slug(session, payload.slug or slugify(payload.title)),
+        slug=slug,
         title=payload.title,
         content_markdown=payload.content_markdown,
         status=payload.status,

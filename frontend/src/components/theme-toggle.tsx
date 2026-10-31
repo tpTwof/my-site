@@ -12,7 +12,7 @@ interface ThemeToggleProps {
 export function ThemeToggle({
   iconClassName = 'size-4',
   className = 'size-9',
-}: ThemeToggleProps = {}) {
+}: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme()
 
   return (

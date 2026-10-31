@@ -32,7 +32,11 @@ def slugify(title: str) -> str:
 
 
 def excerpt(markdown: str, length: int = 200) -> str:
-    """从 Markdown 正文提取纯文本摘要，超长截断并加省略号。"""
+    """从 Markdown 正文提取纯文本摘要，超长截断并加省略号。
+
+    长度按**非空白字符**计数：第 ``length`` 位若恰好是空格，
+    不会因为这个空格被 ``rstrip`` 掉而导致摘要少一个字。
+    """
     plain = re.sub(r"```.*?```", " ", markdown, flags=re.S)   # 代码块
     plain = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", plain)       # 图片
     plain = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", plain)    # 链接保留文字
@@ -40,7 +44,16 @@ def excerpt(markdown: str, length: int = 200) -> str:
     plain = " ".join(plain.split())
     if len(plain) <= length:
         return plain
-    return plain[:length].rstrip() + "…"
+
+    cut = len(plain)
+    counted = 0
+    for i, ch in enumerate(plain):
+        if not ch.isspace():
+            counted += 1
+        if counted > length:
+            cut = i
+            break
+    return plain[:cut].rstrip() + "…"
 
 
 # ──────────────────────────────────────────────

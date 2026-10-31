@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from crud import post as crud
+from crud.post import SlugTaken
 from database import get_session
 from models.post import (
     PostCreate,
@@ -9,7 +10,6 @@ from models.post import (
     PostStatus,
     PostSummaryList,
     PostUpdate,
-    slugify,
 )
 
 router = APIRouter(prefix="/api/admin/posts", tags=["admin-posts"])
@@ -32,11 +32,17 @@ def _require_post(session: Session, post_id: str):
 
 @router.post("", response_model=PostDetail, status_code=201)
 def create_post(body: PostCreate, session: Session = Depends(get_session)):
-    """创建新文章"""
-    # 用户显式指定的 slug 撞车 → 409；自动生成的 slug 撞车 → crud 层追加后缀
-    if body.slug:
-        _ensure_slug_available(session, body.slug)
-    return crud.to_detail(crud.create(session, body))
+    """创建新文章。
+
+    slug 冲突语义由 crud 层决定：显式 slug 撞车抛 SlugTaken → 409；
+    自动生成的 slug 撞车则追加后缀，仍然成功。
+    """
+    try:
+        return crud.to_detail(crud.create(session, body))
+    except SlugTaken as exc:
+        raise HTTPException(
+            status_code=409, detail=f"Slug '{exc.args[0]}' already exists"
+        ) from exc
 
 
 @router.get("", response_model=PostSummaryList)

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getPosts } from '@/lib/api'
+import { getPosts, errorMessage } from '@/lib/api'
 import type { PostSummary } from '@/types/post'
 import { PostCardList } from '@/components/ui/post-card-list'
 
@@ -25,7 +25,7 @@ export default function Posts() {
       setHasMore(data.next_cursor !== null)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载失败')
+      setError(errorMessage(err, '加载失败'))
     } finally {
       loadingRef.current = false
     }

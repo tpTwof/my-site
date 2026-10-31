@@ -9,8 +9,8 @@ import {
 import { useTheme } from "@/components/theme-provider"
 
 /**
- * shadcn 默认版本依赖 next-themes；本项目用的是自建 ThemeProvider，
- * 这里改为读取它的 resolvedTheme。
+ * shadcn 生成的版本读取 next-themes 的 useTheme；本项目没有引入该依赖，
+ * 主题由自建的 ThemeProvider 管理，这里改为读取它的 resolvedTheme。
  */
 const Toaster = (props: ToasterProps) => {
   const { resolvedTheme } = useTheme()

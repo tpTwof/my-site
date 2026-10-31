@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Save, Send } from 'lucide-react'
 import { toast } from 'sonner'
-import { createPost, getAdminPost, updatePost } from '@/lib/api'
-import type { PostStatus } from '@/types/post'
+import { createPost, errorMessage, getAdminPost, updatePost } from '@/lib/api'
+import { STATUS_LABEL, publicSlug } from '@/lib/post-display'
+import type { PostStatus, PostDetail } from '@/types/post'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SplitEditor } from '@/components/split-editor'
+import { ErrorBanner } from '@/components/error-banner'
 
 interface FormState {
   title: string
@@ -18,16 +20,16 @@ interface FormState {
 
 const EMPTY: FormState = { title: '', slug: '', content: '', status: 'draft' }
 
-/** 与后端 slugify 规则保持一致的提示；实际生成以后端为准 */
-function slugHint(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/[\s_]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-  return slug || '（中文标题将由后端生成随机短码）'
+/** 后端会回传最终 slug，前端不重复实现同一套生成规则，只描述其行为 */
+const SLUG_PLACEHOLDER = '留空则由标题生成（仅英文/数字，中文回退为随机短码）'
+
+function toFormState(post: PostDetail): FormState {
+  return {
+    title: post.title,
+    slug: post.slug,
+    content: post.content_markdown,
+    status: post.status,
+  }
 }
 
 export default function AdminPostEdit() {
@@ -40,29 +42,31 @@ export default function AdminPostEdit() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const dirty = useRef(false)
+  /** 已保存的 slug；只有已发布的文章才有公开链接 */
   const [savedSlug, setSavedSlug] = useState<string | null>(null)
-  /** 刚保存完的 id；此时路由变化不需要再次拉取 */
-  const skipFetchFor = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!id) return
-    if (skipFetchFor.current === id) {
-      skipFetchFor.current = null
+    if (!id) {
+      // 新建模式：进入页面就处于可编辑状态，无需加载
+      setLoading(false)
       return
     }
-    setLoading(true)
+    let cancelled = false
     getAdminPost(id)
       .then((post) => {
-        setForm({
-          title: post.title,
-          slug: post.slug,
-          content: post.content_markdown,
-          status: post.status,
-        })
-        setSavedSlug(post.status === 'published' ? post.slug : null)
+        if (cancelled) return
+        setForm(toFormState(post))
+        setSavedSlug(publicSlug(post.status, post.slug))
       })
-      .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
-      .finally(() => setLoading(false))
+      .catch((err) => {
+        if (!cancelled) setError(errorMessage(err, '加载失败'))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   // 有未保存改动时拦截关闭/刷新
@@ -98,13 +102,9 @@ export default function AdminPostEdit() {
     try {
       const saved = isEdit && id ? await updatePost(id, body) : await createPost(body)
       dirty.current = false
-      setSavedSlug(saved.status === 'published' ? saved.slug : null)
-      setForm({
-        title: saved.title,
-        slug: saved.slug,
-        content: saved.content_markdown,
-        status: saved.status,
-      })
+      // 用服务端返回的数据回填，保证展示的 slug 就是后端真正存下的那个
+      setForm(toFormState(saved))
+      setSavedSlug(publicSlug(saved.status, saved.slug))
 
       if (saved.status === 'published') {
         toast.success('已发布', {
@@ -120,13 +120,13 @@ export default function AdminPostEdit() {
         })
       }
 
-      // 新建成功后切到编辑模式，后续保存走 PUT
+      // 新建成功后切到编辑模式，后续保存走 PUT。表单已由上面的 setForm 回填，
+      // 再拉取一次只是对齐路由状态，不会造成前后端数据不一致。
       if (!isEdit) {
-        skipFetchFor.current = saved.id
         navigate(`/admin/posts/${saved.id}/edit`, { replace: true })
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '保存失败'
+      const message = errorMessage(err, '保存失败')
       setError(message)
       toast.error('保存失败', { description: message })
     } finally {
@@ -149,9 +149,7 @@ export default function AdminPostEdit() {
           <h1 className="m-0 text-xl font-bold tracking-tight">
             {isEdit ? '编辑文章' : '新建文章'}
           </h1>
-          <span className="text-xs text-muted-foreground">
-            {form.status === 'published' ? '已发布' : '草稿'}
-          </span>
+          <span className="text-xs text-muted-foreground">{STATUS_LABEL[form.status]}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -176,11 +174,7 @@ export default function AdminPostEdit() {
         </div>
       </header>
 
-      {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      <ErrorBanner message={error} />
 
       <div className="grid gap-4 md:grid-cols-[1fr_18rem]">
         <div className="space-y-1.5">
@@ -200,7 +194,7 @@ export default function AdminPostEdit() {
             id="slug"
             value={form.slug}
             onChange={(e) => patch({ slug: e.target.value })}
-            placeholder={slugHint(form.title)}
+            placeholder={SLUG_PLACEHOLDER}
             className="font-mono text-sm"
           />
         </div>

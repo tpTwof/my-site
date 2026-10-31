@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getAdminPosts, deletePost } from '@/lib/api'
+import { deletePost, errorMessage, getAdminPosts } from '@/lib/api'
 import { formatCardDate } from '@/lib/utils'
+import { STATUS_LABEL } from '@/lib/post-display'
+import { HOVER_CARD_TRANSITION, hoverCardAnimate } from '@/lib/motion'
 import type { PostStatus, PostSummary } from '@/types/post'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NavTabs } from '@/components/ui/nav-tabs'
 import type { NavTabItem } from '@/components/ui/nav-tabs'
-import { cn } from '@/lib/utils'
+import { ErrorBanner } from '@/components/error-banner'
 
 type Filter = 'all' | PostStatus
 
@@ -43,7 +45,7 @@ export default function AdminPostList() {
       )
       setPosts(data.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载失败')
+      setError(errorMessage(err, '加载失败'))
     } finally {
       hasLoadedOnce.current = true
       setInitialLoading(false)
@@ -75,7 +77,7 @@ export default function AdminPostList() {
       setPosts((prev) => prev.filter((p) => p.id !== post.id))
       toast.success('已删除', { description: `《${post.title}》` })
     } catch (err) {
-      const message = err instanceof Error ? err.message : '删除失败'
+      const message = errorMessage(err, '删除失败')
       setError(message)
       toast.error('删除失败', { description: message })
     } finally {
@@ -96,13 +98,14 @@ export default function AdminPostList() {
         </Link>
       </header>
 
-      <NavTabs items={FILTERS} value={filter} onChange={changeFilter} />
+      <NavTabs
+        items={FILTERS}
+        value={filter}
+        onChange={changeFilter}
+        label="按状态筛选文章"
+      />
 
-      {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      <ErrorBanner message={error} />
 
       {initialLoading && (
         <p className="py-16 text-center text-sm text-muted-foreground">加载中...</p>
@@ -115,10 +118,7 @@ export default function AdminPostList() {
       )}
 
       <ul
-        className={cn(
-          'm-0 list-none p-0 transition-opacity',
-          refreshing && 'opacity-50',
-        )}
+        className={`m-0 list-none p-0 transition-opacity ${refreshing ? 'opacity-50' : 'opacity-100'}`}
       >
         {posts.map((post) => (
           <PostRow
@@ -143,39 +143,44 @@ function PostRow({
   onDelete: () => void
 }) {
   const [hovered, setHovered] = useState(false)
+  // 用 focus-within 让键盘用户也能看到操作区，而不是只在鼠标悬停时显示
+  const [focusWithin, setFocusWithin] = useState(false)
+  const revealed = hovered || focusWithin
 
   return (
     <motion.li
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      animate={{
-        y: hovered ? -2 : 0,
-        backgroundColor: hovered ? 'var(--card)' : 'transparent',
-        boxShadow: hovered
-          ? '0 10px 40px -10px rgba(0,0,0,0.15), 0 2px 10px -2px rgba(0,0,0,0.08)'
-          : '0 0 0 0 transparent',
+      onFocus={() => setFocusWithin(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setFocusWithin(false)
+        }
       }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      animate={hoverCardAnimate(revealed)}
+      transition={HOVER_CARD_TRANSITION}
       className="relative flex items-center gap-4 rounded-xl px-5 py-4"
     >
       {/* 分隔线：悬停时淡出，由卡片阴影接替 */}
       <motion.div
         className="absolute inset-x-5 bottom-0 h-px bg-border"
-        animate={{ opacity: hovered ? 0 : 1 }}
-        transition={{ duration: 0.3 }}
+        animate={{ opacity: revealed ? 0 : 1 }}
+        transition={HOVER_CARD_TRANSITION}
       />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <motion.span
             className="truncate text-lg font-semibold"
-            animate={{ color: hovered ? 'var(--foreground)' : 'var(--muted-foreground)' }}
-            transition={{ duration: 0.3 }}
+            animate={{
+              color: revealed ? 'var(--foreground)' : 'var(--muted-foreground)',
+            }}
+            transition={HOVER_CARD_TRANSITION}
           >
             {post.title}
           </motion.span>
           <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-            {post.status === 'published' ? '已发布' : '草稿'}
+            {STATUS_LABEL[post.status]}
           </Badge>
         </div>
         <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
@@ -184,15 +189,16 @@ function PostRow({
         </div>
       </div>
 
-      {/* 操作区：悬停时从右侧滑入，替代原组件的右箭头 */}
+      {/* 操作区：从右侧滑入，替代原组件的右箭头 */}
       <motion.div
         className="flex shrink-0 items-center gap-2"
-        animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 32 }}
+        animate={{ opacity: revealed ? 1 : 0, x: revealed ? 0 : 32 }}
         transition={{
-          // 位移用 0.3s 缓出，透明度稍快，避免滑动过程中半透明
           x: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
           opacity: { duration: 0.15, ease: 'linear' },
         }}
+        // 隐藏时不可点击，避免点到看不见的按钮
+        style={{ pointerEvents: revealed ? 'auto' : 'none' }}
       >
         <Link
           to={`/admin/posts/${post.id}/edit`}
@@ -208,10 +214,7 @@ function PostRow({
           title="删除"
           disabled={deleting}
           onClick={onDelete}
-          className={cn(
-            buttonVariants({ size: 'icon-lg', variant: 'ghost' }),
-            'text-destructive hover:text-destructive disabled:opacity-50',
-          )}
+          className={`${buttonVariants({ size: 'icon-lg', variant: 'ghost' })} text-destructive hover:text-destructive disabled:opacity-50`}
         >
           <Trash2 className="size-5" />
         </button>

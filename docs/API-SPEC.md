@@ -150,6 +150,10 @@
 - 标题含非 ASCII 字符（如中文）时回退为 8 位 UUID 短码
 - 自动生成的 slug 撞车时追加 6 位随机后缀；用户显式指定的 slug 撞车返回 409
 
+> 上述分支在 `crud.post.create` 内部判定（显式 slug 冲突抛 `SlugTaken`，
+> 由 router 映射为 409），而不是依赖 router 的事前检查——任何调用方都得到
+> 同一套语义。
+
 **Response 201:** 完整文章对象（含正文）
 
 ---
@@ -168,8 +172,14 @@
 
 **Response 200:** 同公开列表结构，但包含所有状态的文章
 
-> 排序与公开列表一致，按 `created_at DESC`。游标即最后一条的 `created_at`，
-> 不依赖 UUID 字典序（UUID v4 与创建时间无关，不能用作排序键）。
+> 排序与公开列表一致，按 `created_at DESC`。游标即最后一条的 `created_at`。
+>
+> **已知限制**：游标只有 `created_at` 一个键，没有次级排序。若两篇文章
+> `created_at` 完全相同，翻页时会被 `created_at < cursor` 一起跳过。
+> 通过 HTTP 接口创建时时间戳精确到微秒，实际不会撞上；若将来引入批量导入，
+> 需改为 `(created_at, id)` 复合游标。
+>
+> （早期版本曾用 UUID 作游标，因 UUID v4 与创建时间无关、字典序不可排序而废弃。）
 
 ---
 
@@ -240,8 +250,9 @@ CREATE INDEX idx_posts_created        ON posts (created_at);
 CREATE UNIQUE INDEX ix_posts_slug     ON posts (slug);
 ```
 
-> `status` 的取值由应用层 `Literal["draft", "published"]` 校验（SQLModel 不支持
-> `Literal` 作为列类型，故未使用 SQL `CHECK` 约束）。
+> `status` 在应用层用 `Literal["draft", "published"]` 校验（非法值返回 422）。
+> SQLModel 不支持把 `Literal` 映射为列类型，因此数据库列只是 `VARCHAR(20)`，
+> 没有 SQL 层 `CHECK` 约束——直接绕过 API 写库时不受此限制。
 
 ---
 

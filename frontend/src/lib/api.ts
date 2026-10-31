@@ -8,14 +8,24 @@ import type {
 
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000'
 
-/** 后端错误体：``{"detail": "..."}`` 或 FastAPI 校验错误数组 */
+/** 从 FastAPI 错误体里取出可读信息，无法解析时用回退文案 */
 function messageFrom(detail: unknown, fallback: string): string {
   if (typeof detail === 'string') return detail
-  if (Array.isArray(detail) && detail.length > 0) {
-    const first = detail[0] as { msg?: string }
-    return first?.msg ?? fallback
+  // 422 校验错误：detail 是 [{ loc, msg, type }, ...]
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      if (typeof item === 'object' && item !== null && 'msg' in item) {
+        const { msg } = item as { msg: unknown }
+        if (typeof msg === 'string') return msg
+      }
+    }
   }
   return fallback
+}
+
+/** 把任意 catch 到的错误转成可展示文案，避免各处重复同一段判断 */
+export function errorMessage(err: unknown, fallback = '请求失败'): string {
+  return err instanceof Error && err.message ? err.message : fallback
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -24,11 +34,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => null)
-    throw new Error(messageFrom(body?.detail, `HTTP ${res.status}`))
+    const body: unknown = await res.json().catch(() => null)
+    const detail =
+      typeof body === 'object' && body !== null && 'detail' in body
+        ? (body as { detail: unknown }).detail
+        : undefined
+    throw new Error(messageFrom(detail, `HTTP ${res.status}`))
   }
+  // 204 无响应体；此处返回类型由调用方声明，且仅 deletePost 使用
   if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  return (await res.json()) as T
 }
 
 function pagedQuery(cursor?: string, limit = 10, extra?: Record<string, string>) {
