@@ -74,7 +74,7 @@
       "id": "uuid",
       "slug": "my-first-post",
       "title": "我的第一篇文章",
-      "summary": "从正文自动提取的纯文本摘要（约 200 字）",
+      "summary": "从正文自动提取的纯文本摘要，超过 200 字截断并以 … 结尾",
       "status": "published",
       "created_at": "2024-01-15T08:30:00Z",
       "updated_at": "2024-01-16T10:00:00Z"
@@ -88,6 +88,8 @@
 - 仅返回 `status = "published"` 的文章
 - 按 `created_at DESC` 排序
 - 列表项**不含** `content_markdown`，避免列表接口携带全文
+- `summary` 由 `models.post.excerpt()` 生成：剥离代码块/图片/链接语法/Markdown 记号后
+  取纯文本前 200 字符；超过 200 字符时末尾追加 `…`，未超过则保持原样
 
 ---
 

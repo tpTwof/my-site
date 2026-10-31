@@ -32,13 +32,15 @@ def slugify(title: str) -> str:
 
 
 def excerpt(markdown: str, length: int = 200) -> str:
-    """从 Markdown 正文提取纯文本摘要。"""
+    """从 Markdown 正文提取纯文本摘要，超长截断并加省略号。"""
     plain = re.sub(r"```.*?```", " ", markdown, flags=re.S)   # 代码块
     plain = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", plain)       # 图片
     plain = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", plain)    # 链接保留文字
     plain = re.sub(r"[#>*_`~-]+", " ", plain)                 # Markdown 记号
     plain = " ".join(plain.split())
-    return plain[:length]
+    if len(plain) <= length:
+        return plain
+    return plain[:length].rstrip() + "…"
 
 
 # ──────────────────────────────────────────────
