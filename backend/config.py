@@ -1,9 +1,11 @@
 """应用配置。
 
-优先读环境变量；本地开发可把变量写进 `backend/.env`（已在 .gitignore 中），
-避免在终端里手敲——口令里的 @、$、! 等字符在 shell 中会被解析，导致哈希算错。
+`.env` 是唯一真相来源：启动时总是覆盖环境变量。
+若用 override=False，终端里残留的旧 ADMIN_* 变量会悄悄盖掉 .env，
+表现为「改了 .env、重启了，登录还是失败」。生产环境由 systemd 的
+EnvironmentFile 注入，同样走这条路径，不受影响。
 
-本地开发若怀疑环境变量残留覆盖了 .env，设 DOTENV_OVERRIDE=true 让 .env 优先。
+`TPTWO_ENV_FILE` 可指定另一个 .env 路径（测试用来隔离本地配置）。
 """
 
 import os
@@ -11,13 +13,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# .env 与 backend/ 同级
-ENV_FILE = Path(__file__).resolve().parent / ".env"
+# 默认 backend/.env；测试通过 TPTWO_ENV_FILE 指向别处
+ENV_FILE = Path(os.getenv("TPTWO_ENV_FILE") or Path(__file__).resolve().parent / ".env")
 
-# 默认不覆盖已存在的环境变量（生产由 systemd 注入，应当优先）；
-# 本地排查时可设 DOTENV_OVERRIDE=true 让 .env 覆盖环境变量。
-_override = os.getenv("DOTENV_OVERRIDE", "").lower() in ("1", "true", "yes")
-load_dotenv(ENV_FILE, override=_override)
+load_dotenv(ENV_FILE, override=True)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blog.db")
 
