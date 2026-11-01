@@ -4,9 +4,14 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
 # Virtual environment
 .venv/
+
+# 环境变量文件（含口令哈希，绝不能提交）
+.env
+.env.local
 
 # IDE
 .vscode/
@@ -14,6 +19,7 @@ build/
 
 # Database
 *.db
+*.db-journal
 
 # OS
 Thumbs.db

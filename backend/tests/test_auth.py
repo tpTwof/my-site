@@ -21,6 +21,9 @@ os.environ["ADMIN_PASSWORD_HASH"] = hashlib.sha256(PASSWORD.encode()).hexdigest(
 _tmpdir = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmpdir}/test.db"
 
+# 清空可能的 .env 干扰：确保测试用的是上面设的账号
+os.environ.pop("AUTH_SESSION_TTL_HOURS", None)
+
 from database import engine, init_db  # noqa: E402
 from main import app  # noqa: E402
 from models.admin_session import AdminSession  # noqa: E402

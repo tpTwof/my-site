@@ -5,6 +5,33 @@
 
 ---
 
+## 本地开发（先看这个）
+
+配置读环境变量，也读 `backend/.env`。本地用文件，**不要**在终端里手敲哈希——
+口令里的 `@`、`$`、`!` 会被 PowerShell 解析，算出来的哈希对不上，表现为
+「输错密码有提示，输对密码却登不进去」。
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+生成哈希（`getpass` 会提示输入，内容不经 shell 解析）：
+
+```powershell
+.venv\Scripts\python.exe -c "import hashlib,getpass;print(hashlib.sha256(getpass.getpass('密码: ').encode()).hexdigest())"
+```
+
+把输出的 64 位十六进制粘进 `.env` 的 `ADMIN_PASSWORD_HASH=`，然后正常启动：
+
+```powershell
+.venv\Scripts\uvicorn.exe main:app --reload
+```
+
+`.env` 已列入 `.gitignore`，不会进仓库。
+
+---
+
 ## 服务器布局
 
 | 路径 | 用途 |
@@ -29,7 +56,7 @@ DATABASE_URL=sqlite:////srv/tptwo/data/blog.db
 ADMIN_USERNAME=tpTwo
 
 # 口令的 SHA-256 十六进制摘要（不要写明文口令）
-# 生成： python3 -c "import hashlib,getpass;print(hashlib.sha256(getpass.getpass().encode()).hexdigest())"
+# 生成： python3 -c "import hashlib,getpass;print(hashlib.sha256(getpass.getpass('密码: ').encode()).hexdigest())"
 ADMIN_PASSWORD_HASH=<替换为你的哈希>
 
 # 会话有效期（小时），默认 168 = 7 天
@@ -38,6 +65,9 @@ AUTH_SESSION_TTL_HOURS=168
 # 同域部署时不需要 CORS；如需跨域再填，逗号分隔
 CORS_ORIGINS=https://www.tptwof.top
 ```
+
+> `config.py` 会读取 `backend/.env`，但**不会覆盖**已存在的环境变量，
+> 所以生产环境用 `EnvironmentFile` 注入即可，服务器上不需要 `.env` 文件。
 
 > **注意 `DATABASE_URL` 中的四个斜杠**：`sqlite:///` + 绝对路径 `/srv/...`
 > 才是 `sqlite:////srv/tptwo/data/blog.db`。

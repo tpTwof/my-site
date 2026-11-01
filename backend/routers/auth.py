@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session
 
 from crud import auth as auth_crud
+from config import admin_username
 from database import get_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -50,7 +51,7 @@ def require_auth(request: Request, session: Session = Depends(get_session)) -> s
             detail="未登录或登录已过期",
             headers={"WWW-Authenticate": "Cookie"},
         )
-    return auth_crud.admin_username()
+    return admin_username()
 
 
 @router.post("/login", response_model=MeResponse)

@@ -3,13 +3,14 @@
  *
  * 启动时调 GET /api/auth/me 判断是否已登录（令牌在 httpOnly Cookie 里，
  * JS 读不到，只能问后端）。监听 api.ts 派发的 `auth:unauthorized` 事件，
- * 任何请求收到 401 都会把状态清空，路由守卫随即跳转到登录页。
+ * 任何请求收到 401 都会清空登录态**并立即跳转 /login**——只清状态不够，
+ * 因为不在 /admin 下的页面没有守卫，会停在原地一直重试。
  *
  * 后端关联：POST /api/auth/login、POST /api/auth/logout、GET /api/auth/me。
  */
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { UNAUTHORIZED_EVENT, getMe, login as apiLogin, logout as apiLogout } from '@/lib/api'
-import { errorMessage } from '@/lib/api'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { UNAUTHORIZED_EVENT, errorMessage, getMe, login as apiLogin, logout as apiLogout } from '@/lib/api'
 
 interface AuthContextValue {
   /** 已登录用户名；未登录为 null */
@@ -25,6 +26,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     let cancelled = false
@@ -45,10 +48,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const onUnauthorized = () => setUsername(null)
+    const onUnauthorized = () => {
+      setUsername(null)
+      // 已经在登录页就不重复跳转，避免打断用户输入
+      if (location.pathname !== '/login') {
+        navigate('/login', {
+          replace: true,
+          state: { from: location.pathname + location.search },
+        })
+      }
+    }
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
-  }, [])
+  }, [navigate, location])
 
   const login = useCallback(async (name: string, password: string) => {
     const me = await apiLogin(name, password)

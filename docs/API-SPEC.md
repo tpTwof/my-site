@@ -38,8 +38,9 @@
 
 ## 鉴权接口
 
-单管理员账号：用户名与口令哈希来自环境变量 `ADMIN_USERNAME`、
-`ADMIN_PASSWORD_HASH`（SHA-256 十六进制），不建用户表。
+单管理员账号：用户名与口令哈希来自配置（环境变量，或本地 `backend/.env`）：
+`ADMIN_USERNAME`、`ADMIN_PASSWORD_HASH`（SHA-256 十六进制）。不建用户表，
+也没有注册入口。
 
 会话存于数据库表 `admin_sessions`，只存令牌的 **sha256 摘要**，明文只出现在
 登录响应的那一刻，之后只在 httpOnly Cookie 里往返。因此：

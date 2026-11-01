@@ -1,14 +1,13 @@
 """数据库连接。
 
-DATABASE_URL 通过环境变量配置，默认值是相对**当前工作目录**的 blog.db。
-部署时（systemd）建议给绝对路径，避免工作目录变化导致连到另一个空库。
+DATABASE_URL 来自 config（环境变量或 backend/.env），默认值是相对**当前工作
+目录**的 blog.db。部署时（systemd）建议给绝对路径，避免工作目录变化导致连到
+另一个空库。
 """
-
-import os
 
 from sqlmodel import SQLModel, Session, create_engine
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blog.db")
+from config import DATABASE_URL
 
 engine = create_engine(
     DATABASE_URL,

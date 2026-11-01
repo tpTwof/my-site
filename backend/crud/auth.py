@@ -1,7 +1,7 @@
 """管理端鉴权：口令校验与登录会话管理。
 
 设计取舍：
-- 单账号，账号与口令哈希来自环境变量（不建用户表，少一个攻击面）。
+- 单账号，账号与口令哈希来自配置（环境变量或 backend/.env），不建用户表。
 - 会话存在数据库里（`admin_sessions`），因此可以主动登出、改口令后吊销全部会话；
   不做无状态 JWT——单用户场景下它的唯一优势（免存储）不值得放弃吊销能力。
 - 令牌只以 sha256 摘要入库。
@@ -9,45 +9,24 @@
 
 import hashlib
 import hmac
-import os
 import secrets
 from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, select
 
+from config import admin_password_hash, admin_username, session_ttl_hours
 from models.admin_session import AdminSession
-
-SESSION_TTL_HOURS = int(os.getenv("AUTH_SESSION_TTL_HOURS", "168"))  # 默认 7 天
-
-
-class AuthConfigError(RuntimeError):
-    """环境变量缺失或格式不对。启动时应快速失败。"""
 
 
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def admin_username() -> str:
-    return os.getenv("ADMIN_USERNAME", "admin")
-
-
-def _admin_password_hash() -> str:
-    value = os.getenv("ADMIN_PASSWORD_HASH", "").strip()
-    if not value:
-        raise AuthConfigError(
-            "ADMIN_PASSWORD_HASH 未设置。生成方式见 docs/DEPLOY.md："
-            " python -c \"import hashlib,getpass;"
-            "print(hashlib.sha256(getpass.getpass().encode()).hexdigest())\""
-        )
-    return value
-
-
 def verify_credentials(username: str, password: str) -> bool:
     """口令以 SHA-256 十六进制对比，用 hmac.compare_digest 防时序侧信道。"""
     if not hmac.compare_digest(username, admin_username()):
         return False
-    expected = _admin_password_hash()
+    expected = admin_password_hash()
     actual = hashlib.sha256(password.encode()).hexdigest()
     return hmac.compare_digest(actual, expected)
 
@@ -59,7 +38,7 @@ def create_session(db: Session, user_agent: str | None = None) -> tuple[str, Adm
     session = AdminSession(
         token_hash=_hash_token(token),
         created_at=now,
-        expires_at=now + timedelta(hours=SESSION_TTL_HOURS),
+        expires_at=now + timedelta(hours=session_ttl_hours()),
         user_agent=(user_agent or "")[:255] or None,
     )
     db.add(session)
