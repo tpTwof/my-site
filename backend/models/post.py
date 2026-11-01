@@ -118,6 +118,22 @@ class PostDetail(SQLModel):
     updated_at: datetime
 
 
+class PostNeighbour(SQLModel):
+    """相邻文章的极简信息，用于详情页的上一篇/下一篇。"""
+    slug: str
+    title: str
+
+
+class PublicPostDetail(PostDetail):
+    """公开详情：在 PostDetail 基础上带上相邻文章。
+
+    只有公开接口返回它；管理端沿用 PostDetail（草稿没有"上一篇"的概念）。
+    两个字段都可能为 null——当前文章是第一篇/最后一篇时。
+    """
+    previous: PostNeighbour | None = None
+    next: PostNeighbour | None = None
+
+
 class PostSummaryList(SQLModel):
     """列表接口响应体（游标分页）"""
     items: list[PostSummary]

@@ -13,10 +13,12 @@ from models.post import (
     Post,
     PostCreate,
     PostDetail,
+    PostNeighbour,
     PostStatus,
     PostSummary,
     PostSummaryList,
     PostUpdate,
+    PublicPostDetail,
     excerpt,
     slugify,
     utcnow,
@@ -56,6 +58,32 @@ def list_published(
     return PostSummaryList(
         items=[to_summary(row) for row in rows], next_cursor=next_cursor
     )
+
+
+def neighbours(session: Session, post: Post) -> tuple[Post | None, Post | None]:
+    """返回 (上一篇, 下一篇)，顺序与公开列表一致（created_at 倒序）。
+
+    「上一篇」是在列表里排在它上面的那篇，即 created_at 更晚的；
+    「下一篇」是排在它下面的，即 created_at 更早的。
+    只考虑已发布文章。
+    """
+    published = Post.status == "published"
+
+    previous = session.exec(
+        select(Post)
+        .where(published, Post.created_at > post.created_at, Post.id != post.id)
+        .order_by(Post.created_at.asc())
+        .limit(1)
+    ).first()
+
+    following = session.exec(
+        select(Post)
+        .where(published, Post.created_at < post.created_at, Post.id != post.id)
+        .order_by(Post.created_at.desc())
+        .limit(1)
+    ).first()
+
+    return previous, following
 
 
 def list_admin(
@@ -184,3 +212,17 @@ def to_summary(post: Post) -> PostSummary:
 
 def to_detail(post: Post) -> PostDetail:
     return PostDetail.model_validate(post)
+
+
+def to_public_detail(
+    post: Post, previous: Post | None, following: Post | None
+) -> PublicPostDetail:
+    """拼装公开详情，附带相邻文章。"""
+    detail = PublicPostDetail.model_validate(post)
+    detail.previous = (
+        PostNeighbour(slug=previous.slug, title=previous.title) if previous else None
+    )
+    detail.next = (
+        PostNeighbour(slug=following.slug, title=following.title) if following else None
+    )
+    return detail

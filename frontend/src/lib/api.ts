@@ -19,6 +19,7 @@ import type {
   PostStatus,
   PostSummaryList,
   PostUpdate,
+  PublicPostDetail,
 } from '@/types/post'
 
 /** 相对路径前缀。开发/生产都由反向代理把 /api 转给后端，故恒为空串。 */
@@ -111,8 +112,8 @@ export function getPosts(cursor?: string, limit = 10): Promise<PostSummaryList> 
   return request<PostSummaryList>(`/api/posts?${pagedQuery(cursor, limit)}`)
 }
 
-export function getPost(slug: string): Promise<PostDetail> {
-  return request<PostDetail>(`/api/posts/${encodeURIComponent(slug)}`)
+export function getPost(slug: string): Promise<PublicPostDetail> {
+  return request<PublicPostDetail>(`/api/posts/${encodeURIComponent(slug)}`)
 }
 
 // ─── 管理接口（需登录）───────────────────────

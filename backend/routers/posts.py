@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 from crud import post as crud
 from database import get_session
-from models.post import PostDetail, PostSummaryList
+from models.post import PostSummaryList, PublicPostDetail
 
 router = APIRouter(prefix="/api/posts", tags=["public-posts"])
 
@@ -18,10 +18,11 @@ def list_posts(
     return crud.list_published(session, cursor=cursor, limit=limit)
 
 
-@router.get("/{slug}", response_model=PostDetail)
+@router.get("/{slug}", response_model=PublicPostDetail)
 def get_post(slug: str, session: Session = Depends(get_session)):
-    """获取已发布文章详情"""
+    """获取已发布文章详情，附带上一篇/下一篇（顺序与列表一致）。"""
     post = crud.get_published_by_slug(session, slug)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    return crud.to_detail(post)
+    previous, following = crud.neighbours(session, post)
+    return crud.to_public_detail(post, previous, following)

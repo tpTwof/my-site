@@ -33,6 +33,21 @@ export interface PostDetail {
   updated_at: string
 }
 
+/** 相邻文章 —— 对应后端 PostNeighbour，只有定位信息 */
+export interface PostNeighbour {
+  slug: string
+  title: string
+}
+
+/**
+ * 公开详情 —— 对应后端 PublicPostDetail。
+ * 在 PostDetail 基础上多出上一篇/下一篇，首篇或末篇时为 null。
+ */
+export interface PublicPostDetail extends PostDetail {
+  previous: PostNeighbour | null
+  next: PostNeighbour | null
+}
+
 /** 列表响应 —— 对应后端 PostSummaryList */
 export interface PostSummaryList {
   items: PostSummary[]
