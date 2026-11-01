@@ -4,7 +4,10 @@
  * 悬停时整行左移、每个字母再右移（逐字错位），底边由 muted 变 foreground，
  * 右侧箭头滑出。链接项由父组件通过 links 传入。
  *
- * 后端关联：不请求接口。href 均为站内路由（如 /posts、/admin/posts）。
+ * href 以 http(s):// 或 mailto: 开头时按外链处理（新标签页打开），
+ * 否则当作站内路由。
+ *
+ * 后端关联：不请求接口。
  */
 import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
@@ -15,6 +18,11 @@ export interface HoverLink {
   heading: string
   subheading: string
   href: string
+}
+
+/** 外链判定：http(s) 或 mailto/tel 等协议 */
+function isExternal(href: string): boolean {
+  return /^(https?:)?\/\//.test(href) || /^(mailto|tel):/.test(href)
 }
 
 interface InteractiveHoverLinksProps {
@@ -46,58 +54,79 @@ export function InteractiveHoverLinks({ links, className }: InteractiveHoverLink
   )
 }
 
+const ROW_CLASS =
+  'relative flex items-center justify-between border-b-2 border-muted py-6 transition-colors duration-500 hover:border-foreground md:py-8'
+
 function HoverLinkRow({ heading, subheading, href }: HoverLink) {
+  const inner = <HoverLinkContent heading={heading} subheading={subheading} />
+
   return (
     <motion.div initial="initial" whileHover="whileHover" className="group">
-      <Link
-        to={href}
-        className="relative flex items-center justify-between border-b-2 border-muted py-6 transition-colors duration-500 hover:border-foreground md:py-8"
-      >
-        <div className="min-w-0">
-          <motion.span
-            variants={{
-              initial: { x: 0 },
-              whileHover: { x: -16 },
-            }}
-            transition={{
-              type: 'spring',
-              staggerChildren: 0.075,
-              delayChildren: 0.25,
-            }}
-            className="relative z-10 block text-4xl font-bold tracking-tight text-muted-foreground transition-colors duration-500 group-hover:text-foreground md:text-6xl"
-          >
-            {heading.split('').map((char, i) => (
-              <motion.span
-                variants={{
-                  initial: { x: 0 },
-                  whileHover: { x: 16 },
-                }}
-                transition={{ type: 'spring' }}
-                className="inline-block"
-                key={i}
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </motion.span>
-            ))}
-          </motion.span>
-          <span className="relative z-10 mt-2 block text-base text-muted-foreground transition-colors duration-500 group-hover:text-foreground">
-            {subheading}
-          </span>
-        </div>
-
-        <div className="overflow-hidden">
-          <motion.div
-            variants={{
-              initial: { x: '100%', opacity: 0 },
-              whileHover: { x: '0%', opacity: 1 },
-            }}
-            transition={{ type: 'spring', bounce: 0.25 }}
-            className="relative z-10 shrink-0 p-4"
-          >
-            <ArrowRight className="size-8 text-foreground md:size-12" />
-          </motion.div>
-        </div>
-      </Link>
+      {isExternal(href) ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className={ROW_CLASS}
+        >
+          {inner}
+        </a>
+      ) : (
+        <Link to={href} className={ROW_CLASS}>
+          {inner}
+        </Link>
+      )}
     </motion.div>
+  )
+}
+
+function HoverLinkContent({ heading, subheading }: { heading: string; subheading: string }) {
+  return (
+    <>
+      <div className="min-w-0">
+        <motion.span
+          variants={{
+            initial: { x: 0 },
+            whileHover: { x: -16 },
+          }}
+          transition={{
+            type: 'spring',
+            staggerChildren: 0.075,
+            delayChildren: 0.25,
+          }}
+          className="relative z-10 block text-4xl font-bold tracking-tight text-muted-foreground transition-colors duration-500 group-hover:text-foreground md:text-6xl"
+        >
+          {heading.split('').map((char, i) => (
+            <motion.span
+              variants={{
+                initial: { x: 0 },
+                whileHover: { x: 16 },
+              }}
+              transition={{ type: 'spring' }}
+              className="inline-block"
+              key={i}
+            >
+              {char === ' ' ? '\u00A0' : char}
+            </motion.span>
+          ))}
+        </motion.span>
+        <span className="relative z-10 mt-2 block text-base text-muted-foreground transition-colors duration-500 group-hover:text-foreground">
+          {subheading}
+        </span>
+      </div>
+
+      <div className="overflow-hidden">
+        <motion.div
+          variants={{
+            initial: { x: '100%', opacity: 0 },
+            whileHover: { x: '0%', opacity: 1 },
+          }}
+          transition={{ type: 'spring', bounce: 0.25 }}
+          className="relative z-10 shrink-0 p-4"
+        >
+          <ArrowRight className="size-8 text-foreground md:size-12" />
+        </motion.div>
+      </div>
+    </>
   )
 }

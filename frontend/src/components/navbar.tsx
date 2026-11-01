@@ -2,8 +2,7 @@
  * [前端 · 布局组件] 全站顶部导航栏，除 `/` 入口页外所有页面共用。
  *
  * 左：站名 tpTwo（TextRoll 悬停动画），点击回 /home。
- * 中：暂时留空，预留给每日一句 / 名人名言。
- * 右：已登录时显示「登出」，以及明暗主题切换。
+ * 右：外链图标（GitHub / 邮件）、已登录时的「登出」、明暗主题切换。
  *
  * 后端关联：登出调用 POST /api/auth/logout（见 AuthProvider）。
  */
@@ -12,6 +11,7 @@ import { LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import TextRoll from '@/components/ui/text-roll'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { SocialLinks } from '@/components/social-links'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/components/auth-provider'
 
@@ -32,8 +32,8 @@ export function Navbar() {
           <TextRoll center>tpTwo</TextRoll>
         </Link>
 
-        {/* 中间暂留空，后续可放每日一句/名言 */}
         <div className="flex items-center gap-2">
+          <SocialLinks />
           {username && (
             <Button
               variant="ghost"
