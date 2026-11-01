@@ -21,6 +21,7 @@ def init_db():
     """创建所有表（仅当表不存在时）"""
     # 确保模型被导入，否则 metadata 里没有表
     import models.admin_session  # noqa: F401
+    import models.login_attempt  # noqa: F401
     import models.post  # noqa: F401
 
     SQLModel.metadata.create_all(engine)

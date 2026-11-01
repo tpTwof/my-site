@@ -61,10 +61,31 @@ def login(
     response: Response,
     session: Session = Depends(get_session),
 ):
-    """用户名口令校验通过后签发会话，并把令牌写入 httpOnly Cookie。"""
+    """用户名口令校验通过后签发会话，并把令牌写入 httpOnly Cookie。
+
+    连续失败达到阈值会锁定账号（按账号计数，与 IP 无关），
+    锁定期内直接返回 429，不再校验口令。
+    """
+    key = body.username.strip()
+
+    try:
+        auth_crud.ensure_not_locked(session, key)
+    except auth_crud.LockedOut as exc:
+        raise HTTPException(
+            status_code=429,
+            detail=f"尝试次数过多，请 {exc.retry_after // 60 + 1} 分钟后再试",
+            headers={"Retry-After": str(exc.retry_after)},
+        ) from exc
+
     if not auth_crud.verify_credentials(body.username, body.password):
+        remaining = auth_crud.MAX_FAILURES - auth_crud.record_failure(session, key)
         # 不透露是账号错还是口令错
-        raise HTTPException(status_code=401, detail="账号或密码错误")
+        detail = "账号或密码错误"
+        if 0 < remaining <= 2:
+            detail = f"账号或密码错误，还可尝试 {remaining} 次"
+        raise HTTPException(status_code=401, detail=detail)
+
+    auth_crud.clear_failures(session, key)
 
     token, record = auth_crud.create_session(session)
     response.set_cookie(
