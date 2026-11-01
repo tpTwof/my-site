@@ -1,11 +1,11 @@
 """应用配置。
 
-`.env` 是唯一真相来源：启动时总是覆盖环境变量。
-若用 override=False，终端里残留的旧 ADMIN_* 变量会悄悄盖掉 .env，
-表现为「改了 .env、重启了，登录还是失败」。生产环境由 systemd 的
-EnvironmentFile 注入，同样走这条路径，不受影响。
+配置来源是二选一，`backend/.env` 存在时以它为准：
+- 有 `.env`：读取并**覆盖**同名环境变量。否则终端里残留的旧 ADMIN_*
+  会悄悄盖掉 .env，表现为「改了 .env、重启了，登录还是失败」。
+- 无 `.env`：环境变量原样生效（生产由 systemd 的 EnvironmentFile 注入）。
 
-`TPTWO_ENV_FILE` 可指定另一个 .env 路径（测试用来隔离本地配置）。
+因此**服务器上不要放 `.env`**，否则它会盖掉 `/etc/tptwo/env`。
 """
 
 import os
@@ -13,8 +13,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# 默认 backend/.env；测试通过 TPTWO_ENV_FILE 指向别处
-ENV_FILE = Path(os.getenv("TPTWO_ENV_FILE") or Path(__file__).resolve().parent / ".env")
+ENV_FILE = Path(__file__).resolve().parent / ".env"
+
+
+class ConfigError(Exception):
+    """配置缺失或非法。启动期就该失败，不要拖着带病运行。"""
+
 
 load_dotenv(ENV_FILE, override=True)
 
@@ -34,12 +38,12 @@ def admin_password_hash() -> str:
     """口令的 SHA-256 十六进制摘要。缺失时抛错，让启动期问题尽早暴露。"""
     value = os.getenv("ADMIN_PASSWORD_HASH", "").strip()
     if not value:
-        raise RuntimeError(
+        raise ConfigError(
             "ADMIN_PASSWORD_HASH 未设置。\n"
             "本地开发：在 backend/.env 里写 ADMIN_PASSWORD_HASH=<64 位十六进制>；\n"
             "生成方式（输入不受 shell 转义影响）：\n"
             '  python -c "import hashlib,getpass;'
-            "print(hashlib.sha256(getpass.getpass().encode()).hexdigest())\""
+            "print(hashlib.sha256(getpass.getpass().encode()).hexdigest())"
         )
     return value
 
@@ -53,11 +57,18 @@ def session_ttl_hours() -> int:
 
 def summary() -> str:
     """启动时打印，便于确认进程实际加载了哪套配置（不含口令哈希本身）。"""
-    env_source = f"文件 {ENV_FILE}" if ENV_FILE.exists() else "仅环境变量"
+    if ENV_FILE.exists():
+        # .env 会盖掉环境变量。生产环境应当只靠 systemd 注入，若服务器上
+        # 误留了 .env，它会把 /etc/tptwo/env 的凭据换掉——必须显式警示。
+        env_source = f"文件 {ENV_FILE}（已覆盖同名环境变量）"
+    else:
+        env_source = "仅环境变量"
+
     try:
         hash_state = f"已设置({len(admin_password_hash())} 位)"
-    except RuntimeError:
+    except ConfigError:
         hash_state = "缺失!"
+
     return (
         f"[config] 来源={env_source} | "
         f"ADMIN_USERNAME={admin_username()} | "

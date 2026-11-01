@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
-from config import cors_origins, summary
+from config import ConfigError, admin_password_hash, cors_origins, summary
 from crud import auth as auth_crud
 from database import engine, init_db
 from routers import admin, auth, posts
@@ -12,8 +12,15 @@ from routers import admin, auth, posts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """启动时建表、清理过期会话，并打印配置摘要便于排查。"""
+    """启动时校验配置、建表、清理过期会话，并打印配置摘要便于排查。"""
     print(summary(), flush=True)
+    # 口令哈希缺失时直接拒绝启动：否则服务能起来，但所有登录都失败，
+    # 排查时看到的只是一个 401，很难联想到配置。
+    try:
+        admin_password_hash()
+    except ConfigError as exc:
+        raise RuntimeError(f"启动中止：{exc}") from exc
+
     init_db()
     with Session(engine) as session:
         purged = auth_crud.purge_expired(session)

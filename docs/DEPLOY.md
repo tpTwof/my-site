@@ -10,9 +10,9 @@
 ### 启动
 
 ```powershell
-# 后端（脚本会先清理残留进程，再启动）
+# 后端
 cd backend
-.\dev.ps1
+.venv\Scripts\uvicorn.exe main:app --reload
 
 # 前端
 cd frontend
@@ -20,6 +20,11 @@ npm run dev
 ```
 
 浏览器访问 `http://localhost:5173` 或 `http://127.0.0.1:5173` 都可以。
+
+如果启动后登录一直失败，检查终端里是否残留旧的 `ADMIN_*` 环境变量
+（`$env:ADMIN_USERNAME` / `$env:ADMIN_PASSWORD_HASH`）。`config.py` 里
+`.env` 会覆盖环境变量，所以正常情况下 `.env` 一定生效；但仍建议在干净
+终端里启动。
 
 ### 为什么两个 host 都行
 
@@ -98,8 +103,12 @@ AUTH_SESSION_TTL_HOURS=168
 CORS_ORIGINS=https://www.tptwof.top
 ```
 
-> `config.py` 会读取 `backend/.env`，但**不会覆盖**已存在的环境变量，
-> 所以生产环境用 `EnvironmentFile` 注入即可，服务器上不需要 `.env` 文件。
+> `config.py` 启动时读取 `backend/.env` 并**覆盖**同名环境变量（`.env` 是唯一
+> 真相来源）。服务器上不创建 `.env` 文件，`load_dotenv` 找不到文件即什么都不做，
+> 因此 systemd 的 `EnvironmentFile` 注入的变量原样生效。
+>
+> 反过来要注意：**若服务器上误留了一份 `.env`，它会盖掉 `/etc/tptwo/env`**。
+> 排查配置问题时先确认 `backend/.env` 不存在。
 
 > **注意 `DATABASE_URL` 中的四个斜杠**：`sqlite:///` + 绝对路径 `/srv/...`
 > 才是 `sqlite:////srv/tptwo/data/blog.db`。
