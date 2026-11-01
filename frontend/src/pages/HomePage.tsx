@@ -14,7 +14,6 @@ const HOME_LINKS: HoverLink[] = [
   { heading: 'Posts', subheading: 'Read the writing', href: '/posts' },
   { heading: 'Admin', subheading: 'Write and manage', href: '/admin/posts' },
   { heading: 'GitHub', subheading: 'Code and forks', href: 'https://github.com/tpTwof' },
-  { heading: 'Email', subheading: 'Say hello', href: 'mailto:1377567112@qq.com' },
 ]
 
 export default function HomePage() {

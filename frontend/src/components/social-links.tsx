@@ -2,13 +2,11 @@
  * [前端 · 展示组件] 导航栏右侧的外链图标按钮。
  *
  * 图标与地址集中在本文件的 SOCIAL_LINKS 里，加一个只需加一条。
- * 所有链接都在新标签页打开，邮件走 mailto:。
  *
  * GitHub 用一个内联 SVG：lucide 已移除品牌图标（商标图形）。
  *
  * 后端关联：不请求接口。
  */
-import { Mail } from 'lucide-react'
 
 interface SocialLink {
   label: string
@@ -36,11 +34,6 @@ const SOCIAL_LINKS: SocialLink[] = [
     label: 'GitHub',
     href: 'https://github.com/tpTwof',
     icon: <GithubIcon className="size-5" />,
-  },
-  {
-    label: 'Email',
-    href: 'mailto:1377567112@qq.com',
-    icon: <Mail className="size-5" />,
   },
 ]
 
