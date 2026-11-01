@@ -3,14 +3,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import cors_origins
+from config import cors_origins, summary
 from database import init_db
 from routers import admin, auth, posts
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用启动时自动建表"""
+    """应用启动时自动建表，并打印配置摘要便于排查。"""
+    print(summary(), flush=True)
     init_db()
     yield
 

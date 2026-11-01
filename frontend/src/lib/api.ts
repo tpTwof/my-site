@@ -1,8 +1,11 @@
 /**
  * [前端 · 数据层] 全部后端请求集中于此，页面不直接 fetch。
  *
- * 后端地址由 VITE_API_BASE 指定；留空则走同源（生产环境由 nginx 把
- * /api 反代到后端），本地开发默认 http://127.0.0.1:8000。
+ * 一律请求相对路径 `/api/...`：
+ *   - 开发：Vite dev server 的 server.proxy 转发到本地后端
+ *   - 生产：nginx 把 /api 反代到 FastAPI
+ * 两种环境下页面与 API 都同源，因此不存在跨站 Cookie 问题，
+ * 也不需要在构建时注入后端地址。
  *
  * 鉴权：会话令牌在 httpOnly Cookie 里，JS 读不到，因此所有请求都要
  * `credentials: 'include'`。收到 401 时派发 `auth:unauthorized` 事件，
@@ -18,7 +21,8 @@ import type {
   PostUpdate,
 } from '@/types/post'
 
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000'
+/** 相对路径。若确有需要直连其它后端，可设 VITE_API_BASE 覆盖。 */
+const BASE = import.meta.env.VITE_API_BASE ?? ''
 
 /** 未登录或会话过期时触发，AuthProvider 监听此事件 */
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'

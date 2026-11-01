@@ -7,9 +7,39 @@
 
 ## 本地开发（先看这个）
 
-配置读环境变量，也读 `backend/.env`。本地用文件，**不要**在终端里手敲哈希——
-口令里的 `@`、`$`、`!` 会被 PowerShell 解析，算出来的哈希对不上，表现为
-「输错密码有提示，输对密码却登不进去」。
+### 启动
+
+```powershell
+# 后端（脚本会先清理残留进程，再启动）
+cd backend
+.\dev.ps1
+
+# 前端
+cd frontend
+npm run dev
+```
+
+浏览器访问 `http://localhost:5173` 或 `http://127.0.0.1:5173` 都可以。
+
+### 为什么两个 host 都行
+
+前端一律请求相对路径 `/api/...`，由 Vite 的 `server.proxy` 转发到后端：
+
+```
+页面 http://localhost:5173  →  /api/...  →  (代理)  →  http://127.0.0.1:8000
+```
+
+页面与 API 同源，登录 Cookie 的域始终匹配。生产环境由 nginx 做同样的事，
+所以本地与生产**行为一致，都不需要配置后端地址**。
+
+> 早期版本让前端直连 `http://127.0.0.1:8000`，导致 `localhost:5173` 页面
+> 与 API 跨站，`SameSite=Lax` 的登录 Cookie 不发送，表现为「登录成功又弹回
+> 登录页」。代理方案根治了这一点。
+
+### 口令配置
+
+配置读环境变量，也读 `backend/.env`。本地用文件，**不要**在终端里手敲哈希
+——口令里的 `@`、`$`、`!` 会被 PowerShell 解析，算出来的哈希对不上。
 
 ```powershell
 cd backend
@@ -22,10 +52,12 @@ copy .env.example .env
 .venv\Scripts\python.exe -c "import hashlib,getpass;print(hashlib.sha256(getpass.getpass('密码: ').encode()).hexdigest())"
 ```
 
-把输出的 64 位十六进制粘进 `.env` 的 `ADMIN_PASSWORD_HASH=`，然后正常启动：
+把输出的 64 位十六进制粘进 `.env` 的 `ADMIN_PASSWORD_HASH=`。
 
-```powershell
-.venv\Scripts\uvicorn.exe main:app --reload
+启动时终端会打印一行摘要，确认进程读到了什么：
+
+```
+[config] 来源=文件 ...\backend\.env | ADMIN_USERNAME=tptwo | ADMIN_PASSWORD_HASH=已设置(64 位) | DATABASE_URL=sqlite:///./blog.db
 ```
 
 `.env` 已列入 `.gitignore`，不会进仓库。
@@ -175,7 +207,7 @@ sudo rsync -a --delete frontend/dist/ /var/www/tptwo/
 sudo systemctl restart tptwo
 ```
 
-前端构建时 `VITE_API_BASE` 留空即走同源，无需配置。
+前端一律请求相对路径 `/api/...`，无需配置后端地址，也无需设置 `VITE_API_BASE`。
 
 ---
 
