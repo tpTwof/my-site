@@ -31,7 +31,7 @@ def verify_credentials(username: str, password: str) -> bool:
     return hmac.compare_digest(actual, expected)
 
 
-def create_session(db: Session, user_agent: str | None = None) -> tuple[str, AdminSession]:
+def create_session(db: Session) -> tuple[str, AdminSession]:
     """签发新会话，返回 (明文 token, 会话记录)。明文只在这一刻存在于内存。"""
     token = secrets.token_urlsafe(32)
     now = datetime.now(timezone.utc)
@@ -39,7 +39,6 @@ def create_session(db: Session, user_agent: str | None = None) -> tuple[str, Adm
         token_hash=_hash_token(token),
         created_at=now,
         expires_at=now + timedelta(hours=session_ttl_hours()),
-        user_agent=(user_agent or "")[:255] or None,
     )
     db.add(session)
     db.commit()
@@ -54,14 +53,26 @@ def get_valid_session(db: Session, token: str) -> AdminSession | None:
     record = db.get(AdminSession, _hash_token(token))
     if record is None:
         return None
-    expires_at = record.expires_at
-    if expires_at.tzinfo is None:  # SQLite 读回来是 naive，按 UTC 处理
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at <= datetime.now(timezone.utc):
+    if _is_expired(record):
         db.delete(record)
         db.commit()
         return None
     return record
+
+
+def purge_expired(db: Session) -> int:
+    """删除所有已过期会话，返回删除条数。
+
+    登录时会话表只会因为令牌被使用而过期清理；长期不登录的残留行需要
+    这里主动清扫（启动时调用一次即可）。
+    """
+    records = db.exec(select(AdminSession)).all()
+    expired = [r for r in records if _is_expired(r)]
+    for record in expired:
+        db.delete(record)
+    if expired:
+        db.commit()
+    return len(expired)
 
 
 def revoke_session(db: Session, token: str) -> bool:
@@ -73,10 +84,8 @@ def revoke_session(db: Session, token: str) -> bool:
     return True
 
 
-def revoke_all_sessions(db: Session) -> int:
-    """改口令后踢掉所有设备。"""
-    records = db.exec(select(AdminSession)).all()
-    for record in records:
-        db.delete(record)
-    db.commit()
-    return len(records)
+def _is_expired(record: AdminSession) -> bool:
+    expires_at = record.expires_at
+    if expires_at.tzinfo is None:  # SQLite 读回来是 naive，按 UTC 处理
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return expires_at <= datetime.now(timezone.utc)

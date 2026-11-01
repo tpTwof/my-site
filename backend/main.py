@@ -2,17 +2,23 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session
 
 from config import cors_origins, summary
-from database import init_db
+from crud import auth as auth_crud
+from database import engine, init_db
 from routers import admin, auth, posts
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用启动时自动建表，并打印配置摘要便于排查。"""
+    """启动时建表、清理过期会话，并打印配置摘要便于排查。"""
     print(summary(), flush=True)
     init_db()
+    with Session(engine) as session:
+        purged = auth_crud.purge_expired(session)
+    if purged:
+        print(f"[auth] 清理过期会话 {purged} 条", flush=True)
     yield
 
 

@@ -2,27 +2,19 @@
 
 覆盖：正确登录、错误口令、未登录访问管理接口、登录后访问、登出、
 伪造 Cookie、过期会话、公开接口不受影响。
+
+环境变量由 conftest.py 统一初始化。
 """
 
 import hashlib
-import os
-import tempfile
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-PASSWORD = "correct horse battery staple"
-
-# 环境变量必须在导入 app 之前设置
-os.environ["ADMIN_USERNAME"] = "tester"
-os.environ["ADMIN_PASSWORD_HASH"] = hashlib.sha256(PASSWORD.encode()).hexdigest()
-_tmpdir = tempfile.mkdtemp()
-os.environ["DATABASE_URL"] = f"sqlite:///{_tmpdir}/test.db"
-
-# 清空可能的 .env 干扰：确保测试用的是上面设的账号
-os.environ.pop("AUTH_SESSION_TTL_HOURS", None)
+from tests.conftest import TEST_PASSWORD as PASSWORD
+from tests.conftest import TEST_USERNAME
 
 from database import engine, init_db  # noqa: E402
 from main import app  # noqa: E402
@@ -36,7 +28,7 @@ def client():
         yield c
 
 
-def login(client, password=PASSWORD, username="tester"):
+def login(client, password=PASSWORD, username=TEST_USERNAME):
     return client.post(
         "/api/auth/login", json={"username": username, "password": password}
     )
@@ -46,7 +38,7 @@ def login(client, password=PASSWORD, username="tester"):
 def test_login_success_sets_cookie(client):
     r = login(client)
     assert r.status_code == 200
-    assert r.json()["username"] == "tester"
+    assert r.json()["username"] == TEST_USERNAME
     assert "tp_admin" in r.cookies
 
 
@@ -116,6 +108,22 @@ def test_logout_revokes_session(client):
     assert client.get("/api/admin/posts").status_code == 401
 
 
+def test_logout_clears_cookie_header(client):
+    """登出必须在响应里带上清 Cookie 的 Set-Cookie。
+
+    之前这里 return 了一个新的 Response，注入 response 上的 delete_cookie
+    被丢掉，浏览器端 Cookie 会残留。
+    """
+    client.cookies.clear()
+    login(client)
+    r = client.post("/api/auth/logout")
+    assert r.status_code == 204
+    raw = r.headers.get("set-cookie", "")
+    assert "tp_admin=" in raw, f"缺少清除 Cookie 的头，实际: {raw!r}"
+    # 清除是通过把值置空并 Max-Age=0 实现的
+    assert "max-age=0" in raw.lower() or 'tp_admin=""' in raw or "tp_admin=;" in raw
+
+
 def test_logout_is_idempotent(client):
     client.cookies.clear()
     assert client.post("/api/auth/logout").status_code == 204
@@ -161,7 +169,19 @@ def test_me_requires_auth(client):
     login(client)
     r = client.get("/api/auth/me")
     assert r.status_code == 200
-    assert r.json()["username"] == "tester"
+    assert r.json()["username"] == TEST_USERNAME
+
+
+def test_login_returns_configured_username_not_echo(client):
+    """登录响应应返回配置里的用户名，而不是回显请求体。"""
+    client.cookies.clear()
+    # 大小写不同的用户名不该通过校验
+    r = login(client, username=TEST_USERNAME.upper())
+    assert r.status_code == 401
+
+    r = login(client)
+    assert r.status_code == 200
+    assert r.json()["username"] == TEST_USERNAME
 
 
 # ── 会话不残留明文 ────────────────────────────

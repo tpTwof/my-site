@@ -21,18 +21,11 @@ import type {
   PostUpdate,
 } from '@/types/post'
 
-/** 相对路径。若确有需要直连其它后端，可设 VITE_API_BASE 覆盖。 */
-const BASE = import.meta.env.VITE_API_BASE ?? ''
+/** 相对路径前缀。开发/生产都由反向代理把 /api 转给后端，故恒为空串。 */
+const BASE = ''
 
 /** 未登录或会话过期时触发，AuthProvider 监听此事件 */
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
-
-export class UnauthorizedError extends Error {
-  constructor(message = '未登录或登录已过期') {
-    super(message)
-    this.name = 'UnauthorizedError'
-  }
-}
 
 /** 从 FastAPI 错误体里取出可读信息，无法解析时用回退文案 */
 function messageFrom(detail: unknown, fallback: string): string {
@@ -69,7 +62,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (res.status === 401 && !skipAuthRedirect) {
     window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
-    throw new UnauthorizedError()
+    throw new Error('未登录或登录已过期')
   }
 
   if (!res.ok) {

@@ -105,7 +105,7 @@ def create(session: Session, payload: PostCreate) -> Post:
             raise SlugTaken(payload.slug)
         slug = payload.slug
     else:
-        slug = _unique_slug(session, slugify(payload.title))
+        slug = _auto_slug(session, payload.title)
 
     now = utcnow()
     post = Post(
@@ -122,19 +122,36 @@ def create(session: Session, payload: PostCreate) -> Post:
     return post
 
 
-def _unique_slug(session: Session, slug: str) -> str:
-    """自动生成的 slug 撞车时追加随机后缀，保证写入成功。"""
-    if not get_by_slug(session, slug):
-        return slug
-    return f"{slug}-{uuid.uuid4().hex[:6]}"
+def _auto_slug(session: Session, title: str, *, exclude_id: str | None = None) -> str:
+    """由标题生成 slug；撞车时追加随机后缀。
+
+    仅用于**自动生成**场景。用户显式指定的 slug 撞车必须抛 SlugTaken，
+    不走这里——否则 409 契约会被静默绕过。
+
+    ``exclude_id``：更新时传入当前文章 id。重新生成的 slug 可能与它自己
+    原有的 slug 相同，那不是冲突。
+    """
+    base = slugify(title)
+    existing = get_by_slug(session, base)
+    if existing is None or existing.id == exclude_id:
+        return base
+    return f"{base}-{uuid.uuid4().hex[:6]}"
 
 
 def update(session: Session, post: Post, payload: PostUpdate) -> Post:
-    """部分更新。slug 传空串表示「按当前标题重新生成」。"""
+    """部分更新。
+
+    slug 传空串表示「按标题重新生成」，与其他路径保持一致：
+    重新生成后若仍撞车，由 _auto_slug 加后缀（用户已经放弃指定具体 slug）。
+    """
     changes = payload.model_dump(exclude_unset=True)
 
     if "slug" in changes and not (changes["slug"] or "").strip():
-        changes["slug"] = _unique_slug(session, slugify(changes.get("title") or post.title))
+        changes["slug"] = _auto_slug(
+            session,
+            changes.get("title") or post.title,
+            exclude_id=post.id,
+        )
 
     for field, value in changes.items():
         setattr(post, field, value)

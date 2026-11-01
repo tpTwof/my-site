@@ -45,8 +45,9 @@
 会话存于数据库表 `admin_sessions`，只存令牌的 **sha256 摘要**，明文只出现在
 登录响应的那一刻，之后只在 httpOnly Cookie 里往返。因此：
 
-- 支持主动登出与到期清理
-- 改口令后可用 `crud.auth.revoke_all_sessions()` 踢掉所有设备
+- 支持主动登出；令牌使用时若已过期会被立即删除
+- 服务启动时清扫所有已过期会话（`crud.auth.purge_expired`）
+- 改口令后需手动清空该表，见 `docs/DEPLOY.md` 的「改密码」
 - 数据库泄漏不会直接泄露可用令牌
 
 ### POST /api/auth/login

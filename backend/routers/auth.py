@@ -66,15 +66,14 @@ def login(
         # 不透露是账号错还是口令错
         raise HTTPException(status_code=401, detail="账号或密码错误")
 
-    token, record = auth_crud.create_session(
-        session, user_agent=request.headers.get("user-agent")
-    )
+    token, record = auth_crud.create_session(session)
     response.set_cookie(
         value=token,
         max_age=int((record.expires_at - record.created_at).total_seconds()),
         **_cookie_kwargs(request),
     )
-    return MeResponse(username=body.username)
+    # 返回**配置中的**用户名，而不是请求体里回显的字符串
+    return MeResponse(username=admin_username())
 
 
 @router.post("/logout", status_code=204)
@@ -87,8 +86,12 @@ def logout(
     token = request.cookies.get(COOKIE_NAME, "")
     if token:
         auth_crud.revoke_session(session, token)
+    # 必须写回注入的 response 才能带上 Set-Cookie；
+    # 之前这里 return 了一个新的 Response，delete_cookie 的头被丢弃，
+    # 浏览器端 Cookie 会一直残留。
     response.delete_cookie(**_cookie_kwargs(request))
-    return Response(status_code=204)
+    response.status_code = 204
+    return None
 
 
 @router.get("/me", response_model=MeResponse)

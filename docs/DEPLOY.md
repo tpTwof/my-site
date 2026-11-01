@@ -85,7 +85,7 @@ copy .env.example .env
 DATABASE_URL=sqlite:////srv/tptwo/data/blog.db
 
 # 管理员账号
-ADMIN_USERNAME=tpTwo
+ADMIN_USERNAME=tptwo
 
 # 口令的 SHA-256 十六进制摘要（不要写明文口令）
 # 生成： python3 -c "import hashlib,getpass;print(hashlib.sha256(getpass.getpass('密码: ').encode()).hexdigest())"
@@ -224,8 +224,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://www.tptwof.top/api/admin/posts
 # 3. 登录并拿到 Cookie
 curl -s -c /tmp/c.txt -X POST https://www.tptwof.top/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"tpTwo","password":"你的口令"}'
-# 期望：{"username":"tpTwo"}
+  -d '{"username":"tptwo","password":"你的口令"}'
+# 期望：{"username":"tptwo"}
 
 # 4. 带 Cookie 访问管理接口
 curl -s -b /tmp/c.txt https://www.tptwof.top/api/admin/posts | head -c 120

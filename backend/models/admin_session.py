@@ -19,4 +19,3 @@ class AdminSession(SQLModel, table=True):
     token_hash: str = Field(primary_key=True, max_length=64)
     created_at: datetime = Field(default_factory=utcnow)
     expires_at: datetime = Field(index=True)
-    user_agent: str | None = Field(default=None, max_length=255)

@@ -19,13 +19,11 @@ ENV_FILE = Path(__file__).resolve().parent / ".env"
 _override = os.getenv("DOTENV_OVERRIDE", "").lower() in ("1", "true", "yes")
 load_dotenv(ENV_FILE, override=_override)
 
-DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
-
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blog.db")
 
 
 def cors_origins() -> list[str]:
-    raw = os.getenv("CORS_ORIGINS", DEFAULT_ORIGINS)
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
