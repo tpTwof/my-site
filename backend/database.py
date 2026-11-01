@@ -1,12 +1,29 @@
+"""数据库连接。
+
+DATABASE_URL 通过环境变量配置，默认值是相对**当前工作目录**的 blog.db。
+部署时（systemd）建议给绝对路径，避免工作目录变化导致连到另一个空库。
+"""
+
+import os
+
 from sqlmodel import SQLModel, Session, create_engine
 
-DATABASE_URL = "sqlite:///./blog.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blog.db")
 
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    # 允许在 TestClient / 多线程里共用同一连接池
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+)
 
 
 def init_db():
     """创建所有表（仅当表不存在时）"""
+    # 确保模型被导入，否则 metadata 里没有表
+    import models.admin_session  # noqa: F401
+    import models.post  # noqa: F401
+
     SQLModel.metadata.create_all(engine)
 
 

@@ -1,0 +1,103 @@
+"""管理端鉴权：口令校验与登录会话管理。
+
+设计取舍：
+- 单账号，账号与口令哈希来自环境变量（不建用户表，少一个攻击面）。
+- 会话存在数据库里（`admin_sessions`），因此可以主动登出、改口令后吊销全部会话；
+  不做无状态 JWT——单用户场景下它的唯一优势（免存储）不值得放弃吊销能力。
+- 令牌只以 sha256 摘要入库。
+"""
+
+import hashlib
+import hmac
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from sqlmodel import Session, select
+
+from models.admin_session import AdminSession
+
+SESSION_TTL_HOURS = int(os.getenv("AUTH_SESSION_TTL_HOURS", "168"))  # 默认 7 天
+
+
+class AuthConfigError(RuntimeError):
+    """环境变量缺失或格式不对。启动时应快速失败。"""
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def admin_username() -> str:
+    return os.getenv("ADMIN_USERNAME", "admin")
+
+
+def _admin_password_hash() -> str:
+    value = os.getenv("ADMIN_PASSWORD_HASH", "").strip()
+    if not value:
+        raise AuthConfigError(
+            "ADMIN_PASSWORD_HASH 未设置。生成方式见 docs/DEPLOY.md："
+            " python -c \"import hashlib,getpass;"
+            "print(hashlib.sha256(getpass.getpass().encode()).hexdigest())\""
+        )
+    return value
+
+
+def verify_credentials(username: str, password: str) -> bool:
+    """口令以 SHA-256 十六进制对比，用 hmac.compare_digest 防时序侧信道。"""
+    if not hmac.compare_digest(username, admin_username()):
+        return False
+    expected = _admin_password_hash()
+    actual = hashlib.sha256(password.encode()).hexdigest()
+    return hmac.compare_digest(actual, expected)
+
+
+def create_session(db: Session, user_agent: str | None = None) -> tuple[str, AdminSession]:
+    """签发新会话，返回 (明文 token, 会话记录)。明文只在这一刻存在于内存。"""
+    token = secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    session = AdminSession(
+        token_hash=_hash_token(token),
+        created_at=now,
+        expires_at=now + timedelta(hours=SESSION_TTL_HOURS),
+        user_agent=(user_agent or "")[:255] or None,
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return token, session
+
+
+def get_valid_session(db: Session, token: str) -> AdminSession | None:
+    """取出未过期的会话；过期记录顺手删除。"""
+    if not token:
+        return None
+    record = db.get(AdminSession, _hash_token(token))
+    if record is None:
+        return None
+    expires_at = record.expires_at
+    if expires_at.tzinfo is None:  # SQLite 读回来是 naive，按 UTC 处理
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at <= datetime.now(timezone.utc):
+        db.delete(record)
+        db.commit()
+        return None
+    return record
+
+
+def revoke_session(db: Session, token: str) -> bool:
+    record = db.get(AdminSession, _hash_token(token))
+    if record is None:
+        return False
+    db.delete(record)
+    db.commit()
+    return True
+
+
+def revoke_all_sessions(db: Session) -> int:
+    """改口令后踢掉所有设备。"""
+    records = db.exec(select(AdminSession)).all()
+    for record in records:
+        db.delete(record)
+    db.commit()
+    return len(records)

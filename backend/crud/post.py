@@ -130,7 +130,12 @@ def _unique_slug(session: Session, slug: str) -> str:
 
 
 def update(session: Session, post: Post, payload: PostUpdate) -> Post:
+    """部分更新。slug 传空串表示「按当前标题重新生成」。"""
     changes = payload.model_dump(exclude_unset=True)
+
+    if "slug" in changes and not (changes["slug"] or "").strip():
+        changes["slug"] = _unique_slug(session, slugify(changes.get("title") or post.title))
+
     for field, value in changes.items():
         setattr(post, field, value)
     post.updated_at = utcnow()

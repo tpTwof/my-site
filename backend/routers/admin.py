@@ -1,3 +1,10 @@
+"""
+[后端 · 路由] 管理端文章 CRUD —— `/api/admin/posts`。
+
+整组路由挂在 `require_auth` 依赖上：未登录一律 401。
+会话来源见 routers/auth.py（httpOnly Cookie）。
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
@@ -11,8 +18,14 @@ from models.post import (
     PostSummaryList,
     PostUpdate,
 )
+from routers.auth import require_auth
 
-router = APIRouter(prefix="/api/admin/posts", tags=["admin-posts"])
+# 整个 router 统一要求登录，避免逐个端点漏挂
+router = APIRouter(
+    prefix="/api/admin/posts",
+    tags=["admin-posts"],
+    dependencies=[Depends(require_auth)],
+)
 
 
 def _ensure_slug_available(

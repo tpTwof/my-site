@@ -1,19 +1,23 @@
 /**
- * [前端 · 应用根组件] 挂载主题、路由、全局 Toast。
+ * [前端 · 应用根组件] 挂载主题、登录态、路由、全局 Toast。
  *
  * 路由表见下方 <Routes>：/ 入口页、/home 首页导航、/posts 博客列表、
- * /posts/:slug 详情、/admin/posts* 管理端。
+ * /posts/:slug 详情、/login 登录、/admin/posts* 管理端（需登录）。
  *
- * 后端关联：本文件不发请求；各页面自行调用 src/lib/api.ts。
+ * 后端关联：本文件不发请求；登录态由 AuthProvider 维护，
+ *   页面各自通过 src/lib/api.ts 调用后端。
  */
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
+import { AuthProvider } from '@/components/auth-provider'
+import { RequireAuth } from '@/components/require-auth'
 import { Navbar } from '@/components/navbar'
 import { Toaster } from '@/components/ui/sonner'
 import Landing from '@/pages/Landing'
 import HomePage from '@/pages/HomePage'
 import Posts from '@/pages/Posts'
 import PostDetail from '@/pages/PostDetail'
+import Login from '@/pages/Login'
 import AdminPostList from '@/pages/admin/AdminPostList'
 import AdminPostEdit from '@/pages/admin/AdminPostEdit'
 
@@ -36,9 +40,32 @@ function AppLayout() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
-          <Route path="/admin/posts" element={<AdminPostList />} />
-          <Route path="/admin/posts/new" element={<AdminPostEdit />} />
-          <Route path="/admin/posts/:id/edit" element={<AdminPostEdit />} />
+          <Route path="/login" element={<Login />} />
+
+          <Route
+            path="/admin/posts"
+            element={
+              <RequireAuth>
+                <AdminPostList />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/posts/new"
+            element={
+              <RequireAuth>
+                <AdminPostEdit />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/posts/:id/edit"
+            element={
+              <RequireAuth>
+                <AdminPostEdit />
+              </RequireAuth>
+            }
+          />
         </Routes>
       </main>
       <Toaster position="bottom-right" richColors closeButton />
@@ -49,9 +76,11 @@ function AppLayout() {
 function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

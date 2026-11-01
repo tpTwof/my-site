@@ -107,9 +107,12 @@ export default function AdminPostEdit() {
     }
     setSaving(true)
     setError(null)
+    const trimmedSlug = form.slug.trim()
     const body = {
       title: form.title.trim(),
-      slug: form.slug.trim() || undefined,
+      // 编辑时若清空了 slug，显式送空串表示「按标题重新生成」；
+      // 否则 undefined 会被后端的 exclude_unset 丢弃，旧 slug 静默保留。
+      slug: trimmedSlug || (isEdit ? '' : undefined),
       content_markdown: form.content,
       status,
     }

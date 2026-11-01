@@ -1,11 +1,11 @@
-import os
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import init_db
-from routers import admin, posts
+from routers import admin, auth, posts
 
 DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
 
@@ -24,8 +24,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="个人博客 API",
-    description="博客文章 CRUD 接口",
-    version="0.1.0",
+    description="博客文章 CRUD 接口（管理端需登录）",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -37,6 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(posts.router)
 app.include_router(admin.router)
 

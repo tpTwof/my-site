@@ -1,7 +1,7 @@
 # tpTwo 站点接口规范
 
-> **当前阶段范围**: 站点入口 + 博客文章 CRUD
-> **明确排除**: 用户认证、标签/分类、评论、统计、搜索、媒体上传
+> **当前阶段范围**: 站点入口 + 博客文章 CRUD + 管理端登录鉴权
+> **明确排除**: 多用户/注册、标签分类、评论、统计、搜索、媒体上传
 
 ---
 
@@ -10,14 +10,16 @@
 | 项目 | 约定 |
 |------|------|
 | 站点接口前缀 | `/api` |
+| 鉴权接口前缀 | `/api/auth` |
 | 公开博客接口前缀 | `/api/posts` |
-| 管理博客接口前缀 | `/api/admin/posts` |
+| 管理接口前缀 | `/api/admin/posts`（**需登录**） |
 | 数据格式 | JSON, UTF-8 |
 | 分页方式 | 游标分页 (Cursor-based)，游标为 base64url 不透明字符串 |
 | 正文格式 | 原始 Markdown 存取，前端渲染 |
 | 文章状态 | `draft` / `published`（请求体校验，非法值返回 422） |
 | URL 标识 | 自定义 Slug（公开接口）/ UUID（管理接口） |
-| 数据库 | SQLite |
+| 会话 | httpOnly Cookie `tp_admin`，默认 7 天 |
+| 数据库 | SQLite（`DATABASE_URL` 环境变量配置） |
 | ORM | SQLModel（查询/写入统一收敛在 `backend/crud/`） |
 
 ### 错误响应约定
@@ -25,11 +27,49 @@
 | 状态码 | 含义 |
 |--------|------|
 | 400 | 游标非法 |
+| 401 | 未登录或会话过期（管理接口、`/api/auth/me`） |
 | 404 | 资源不存在（或文章未发布时通过公开接口访问） |
 | 409 | Slug 已被占用 |
 | 422 | 请求体校验失败（如非法 `status`） |
 
 错误体统一为 `{"detail": "..."}`（422 时为 FastAPI 校验错误数组）。
+
+---
+
+## 鉴权接口
+
+单管理员账号：用户名与口令哈希来自环境变量 `ADMIN_USERNAME`、
+`ADMIN_PASSWORD_HASH`（SHA-256 十六进制），不建用户表。
+
+会话存于数据库表 `admin_sessions`，只存令牌的 **sha256 摘要**，明文只出现在
+登录响应的那一刻，之后只在 httpOnly Cookie 里往返。因此：
+
+- 支持主动登出与到期清理
+- 改口令后可用 `crud.auth.revoke_all_sessions()` 踢掉所有设备
+- 数据库泄漏不会直接泄露可用令牌
+
+### POST /api/auth/login
+
+```json
+{ "username": "admin", "password": "..." }
+```
+
+**Response 200** `{ "username": "admin" }`，并 `Set-Cookie: tp_admin=...;
+HttpOnly; SameSite=Lax; Path=/`（HTTPS 下附加 `Secure`）。
+
+**Response 401** `{"detail": "账号或密码错误"}` —— 账号错与口令错返回**同一文案**，
+不透露是哪一项错。
+
+### POST /api/auth/logout
+
+注销当前会话并清除 Cookie。幂等，未登录也返回 **204**。
+
+### GET /api/auth/me
+
+前端启动时判断登录态。
+
+**Response 200** `{ "username": "admin" }`
+**Response 401** 未登录
 
 ---
 
@@ -121,7 +161,7 @@
 
 ---
 
-## 博客 · 管理接口（未来加认证，当前暂不鉴权）
+## 博客 · 管理接口（需登录）
 
 ### POST /api/admin/posts
 
@@ -274,9 +314,9 @@ backend/
 
 ## 后续阶段（明确排除在当前范围外）
 
-- 🔒 用户认证 / JWT / Session
 - 🏷️ 标签 / 分类系统
 - 💬 评论系统
 - 📊 访问量统计
 - 🔍 全文搜索
 - 🖼️ 图片上传 / 媒体管理（封面图已确认不做）
+- 👥 多用户 / 注册（当前是单管理员，账号来自环境变量）
