@@ -69,6 +69,13 @@ body {
   --post-body: #000000;
   --post-rule: #eeeeee;
 
+  /* ── 下拉灯绳 / 回到顶部 ──
+     白绳放在白底上对比度 1:1，靠描边给出轮廓。
+     改颜色只动这里，组件里不写字面值。 */
+  --lamp-rope: #ffffff;
+  --lamp-bead: #ffffff;
+  --lamp-outline: #d4d4d8;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -111,6 +118,11 @@ body {
   --post-muted: #9ca3af;
   --post-body: #e5e7eb;
   --post-rule: #2e303a;
+
+  /* 下拉灯绳（暗色）：白绳天然跳出来，描边退到深灰避免发光边 */
+  --lamp-rope: #ffffff;
+  --lamp-bead: #ffffff;
+  --lamp-outline: #3f3f46;
 
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

@@ -17,6 +17,7 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { getPost } from '@/lib/api'
 import { formatCardDate } from '@/lib/utils'
+import { LampPull } from '@/components/ui/lamp-pull'
 import type { PublicPostDetail } from '@/types/post'
 
 export default function PostDetail() {
@@ -68,6 +69,9 @@ export default function PostDetail() {
           {post.content_markdown}
         </ReactMarkdown>
       </div>
+
+      {/* 灯绳在上一篇/下一篇之上，整体靠左 */}
+      <LampPull />
 
       <PostNeighbours previous={post.previous} next={post.next} />
     </article>
