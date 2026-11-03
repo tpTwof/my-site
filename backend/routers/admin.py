@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from crud import post as crud
+from crud import tag as tag_crud
 from crud.post import SlugTaken
 from database import get_session
 from models.post import (
@@ -51,11 +52,12 @@ def create_post(body: PostCreate, session: Session = Depends(get_session)):
     自动生成的 slug 撞车则追加后缀，仍然成功。
     """
     try:
-        return crud.to_detail(crud.create(session, body))
+        post = crud.create(session, body)
     except SlugTaken as exc:
         raise HTTPException(
             status_code=409, detail=f"Slug '{exc.args[0]}' already exists"
         ) from exc
+    return crud.to_detail(post, tag_crud.tags_for_post(session, post.id))
 
 
 @router.get("", response_model=PostSummaryList)
@@ -71,19 +73,21 @@ def list_posts_admin(
 
 @router.get("/{post_id}", response_model=PostDetail)
 def get_post_admin(post_id: str, session: Session = Depends(get_session)):
-    """获取文章详情（含草稿）"""
-    return crud.to_detail(_require_post(session, post_id))
+    """获取文章详情（含草稿与标签）"""
+    post = _require_post(session, post_id)
+    return crud.to_detail(post, tag_crud.tags_for_post(session, post.id))
 
 
 @router.put("/{post_id}", response_model=PostDetail)
 def update_post(
     post_id: str, body: PostUpdate, session: Session = Depends(get_session)
 ):
-    """更新文章"""
+    """更新文章。body.tags 不传 = 不改动标签；传 [] = 回落到「其他」。"""
     post = _require_post(session, post_id)
     if body.slug and body.slug != post.slug:
         _ensure_slug_available(session, body.slug, ignore_id=post.id)
-    return crud.to_detail(crud.update(session, post, body))
+    updated = crud.update(session, post, body)
+    return crud.to_detail(updated, tag_crud.tags_for_post(session, updated.id))
 
 
 @router.delete("/{post_id}", status_code=204)

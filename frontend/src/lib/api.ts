@@ -20,6 +20,7 @@ import type {
   PostSummaryList,
   PostUpdate,
   PublicPostDetail,
+  TagList,
 } from '@/types/post'
 
 /** 相对路径前缀。开发/生产都由反向代理把 /api 转给后端，故恒为空串。 */
@@ -108,12 +109,35 @@ export function getMe(): Promise<Me> {
 }
 
 // ─── 公开接口 ───────────────────────────────
-export function getPosts(cursor?: string, limit = 10): Promise<PostSummaryList> {
-  return request<PostSummaryList>(`/api/posts?${pagedQuery(cursor, limit)}`)
+export function getPosts(
+  cursor?: string,
+  limit = 10,
+  tag?: string,
+): Promise<PostSummaryList> {
+  return request<PostSummaryList>(
+    `/api/posts?${pagedQuery(cursor, limit, tag ? { tag } : undefined)}`,
+  )
 }
 
 export function getPost(slug: string): Promise<PublicPostDetail> {
   return request<PublicPostDetail>(`/api/posts/${encodeURIComponent(slug)}`)
+}
+
+// ─── 标签 ───────────────────────────────────
+/** 所有标签 + 各自的已发布文章数，按数量降序 */
+export function getTags(): Promise<TagList> {
+  return request<TagList>('/api/tags')
+}
+
+/** 某个标签下的已发布文章（结构同 getPosts） */
+export function getPostsByTag(
+  slug: string,
+  cursor?: string,
+  limit = 10,
+): Promise<PostSummaryList> {
+  return request<PostSummaryList>(
+    `/api/tags/${encodeURIComponent(slug)}/posts?${pagedQuery(cursor, limit)}`,
+  )
 }
 
 // ─── 管理接口（需登录）───────────────────────

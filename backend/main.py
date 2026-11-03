@@ -7,7 +7,7 @@ from sqlmodel import Session
 from config import ConfigError, admin_password_hash, cors_origins, summary
 from crud import auth as auth_crud
 from database import engine, init_db
-from routers import admin, auth, posts
+from routers import admin, auth, posts, tags
 
 
 @asynccontextmanager
@@ -46,6 +46,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(posts.router)
+app.include_router(tags.router)
 app.include_router(admin.router)
 
 

@@ -9,6 +9,17 @@ from sqlmodel import Field, SQLModel
 PostStatus = Literal["draft", "published"]
 
 
+class TagRef(SQLModel):
+    """挂在文章上的标签，只有定位信息。
+
+    定义在这里而不是 models/tag.py，避免 tag.py → post.py 的循环导入：
+    tag.py 需要 Post 做计数查询，post.py 又需要 TagRef。
+    """
+
+    slug: str
+    name: str
+
+
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -86,6 +97,8 @@ class PostCreate(SQLModel):
     slug: str | None = Field(default=None, max_length=255)
     content_markdown: str = ""
     status: PostStatus = "draft"
+    # 标签名数组。不传或空数组 → 落到默认标签「其他」
+    tags: list[str] | None = None
 
 
 class PostUpdate(SQLModel):
@@ -94,6 +107,8 @@ class PostUpdate(SQLModel):
     slug: str | None = Field(default=None, max_length=255)
     content_markdown: str | None = None
     status: PostStatus | None = None
+    # 不传 = 不改动标签；传 [] = 回落到「其他」
+    tags: list[str] | None = None
 
 
 class PostSummary(SQLModel):
@@ -105,6 +120,8 @@ class PostSummary(SQLModel):
     status: PostStatus
     created_at: datetime
     updated_at: datetime
+    # 标签。由 crud 批量填充，模型层不查库
+    tags: list[TagRef] = []
 
 
 class PostDetail(SQLModel):
@@ -116,6 +133,7 @@ class PostDetail(SQLModel):
     status: PostStatus
     created_at: datetime
     updated_at: datetime
+    tags: list[TagRef] = []
 
 
 class PostNeighbour(SQLModel):

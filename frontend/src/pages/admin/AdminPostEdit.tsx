@@ -28,19 +28,43 @@ import { ErrorBanner } from '@/components/error-banner'
 interface FormState {
   title: string
   slug: string
+  /** 标签原始输入，逗号/空白分隔 */
+  tags: string
   content: string
   status: PostStatus
 }
 
-const EMPTY: FormState = { title: '', slug: '', content: '', status: 'draft' }
+const EMPTY: FormState = {
+  title: '',
+  slug: '',
+  tags: '',
+  content: '',
+  status: 'draft',
+}
 
 /** 后端会回传最终 slug，前端不重复实现同一套生成规则，只描述其行为 */
 const SLUG_PLACEHOLDER = '留空则由标题生成（仅英文/数字，中文回退为随机短码）'
+
+/** 标签名上限，与后端 models/tag.py 的 TAG_MAX_LENGTH 一致 */
+const TAG_MAX_LENGTH = 20
+
+/**
+ * 把标签输入拆成数组。逗号（半角/全角）与空白都当分隔符，
+ * 所以 `java python` 和 `java, python` 结果相同。
+ */
+function parseTags(raw: string): string[] {
+  return raw
+    .split(/[,，\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => s.slice(0, TAG_MAX_LENGTH))
+}
 
 function toFormState(post: PostDetail): FormState {
   return {
     title: post.title,
     slug: post.slug,
+    tags: post.tags.map((t) => t.name).join(', '),
     content: post.content_markdown,
     status: post.status,
   }
@@ -99,6 +123,9 @@ export default function AdminPostEdit() {
     setForm((prev) => ({ ...prev, ...next }))
   }
 
+  /** 输入框右侧的回显用 */
+  const parsedTags = parseTags(form.tags)
+
   async function save(status: PostStatus) {
     if (!form.title.trim()) {
       setError('标题不能为空')
@@ -115,6 +142,8 @@ export default function AdminPostEdit() {
       slug: trimmedSlug || (isEdit ? '' : undefined),
       content_markdown: form.content,
       status,
+      // 空数组由后端回落到「其他」，前端不重复实现这条规则
+      tags: parsedTags,
     }
     try {
       const saved = isEdit && id ? await updatePost(id, body) : await createPost(body)
@@ -214,6 +243,31 @@ export default function AdminPostEdit() {
             placeholder={SLUG_PLACEHOLDER}
             className="font-mono text-sm"
           />
+        </div>
+      </div>
+
+      {/* 标签：左边输入，右边实时回显解析结果 */}
+      <div className="space-y-1.5">
+        <Label htmlFor="tags">标签（Tag）</Label>
+        <div className="relative">
+          <Input
+            id="tags"
+            value={form.tags}
+            onChange={(e) => patch({ tags: e.target.value })}
+            placeholder="逗号或空格分隔，如：java, python, c#"
+            className="pr-[45%]"
+          />
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap text-[var(--post-link)]">
+            {parsedTags.length > 0 ? (
+              parsedTags.map((t) => (
+                <span key={t} className="shrink-0">
+                  #{t}
+                </span>
+              ))
+            ) : (
+              <span className="text-muted-foreground">默认：#其他</span>
+            )}
+          </span>
         </div>
       </div>
 

@@ -17,6 +17,7 @@ import Landing from '@/pages/Landing'
 import HomePage from '@/pages/HomePage'
 import Posts from '@/pages/Posts'
 import PostDetail from '@/pages/PostDetail'
+import PostTags from '@/pages/PostTags'
 import Login from '@/pages/Login'
 import AdminPostList from '@/pages/admin/AdminPostList'
 import AdminPostEdit from '@/pages/admin/AdminPostEdit'
@@ -40,6 +41,7 @@ function AppLayout() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
+          <Route path="/tags/:slug" element={<PostTags />} />
           <Route path="/login" element={<Login />} />
 
           <Route

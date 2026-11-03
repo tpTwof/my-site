@@ -23,6 +23,7 @@ def init_db():
     import models.admin_session  # noqa: F401
     import models.login_attempt  # noqa: F401
     import models.post  # noqa: F401
+    import models.tag  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
 
