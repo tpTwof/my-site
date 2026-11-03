@@ -75,16 +75,16 @@ export function TagSidebar({
           <TagRow
             label="All"
             count={total}
-            active={activeSlug === null}
             href="/posts"
+            current={activeSlug === null}
           />
           {visible.map((tag) => (
             <TagRow
               key={tag.slug}
               label={tag.name}
               count={tag.count}
-              active={activeSlug === tag.slug}
               href={`/tags/${encodeURIComponent(tag.slug)}`}
+              current={activeSlug === tag.slug}
             />
           ))}
         </nav>
@@ -136,42 +136,46 @@ function SearchBox({
 /**
  * 单个标签行。
  *
- * 红条从 0 展开到 3px：用一个宽度从 0 过渡的 span 实现，而不是 border，
- * 因为 border 的宽度变化会带动布局位移，视觉上像文字在抖。
- * 文字同步右移，与文章列表的悬停行为一致。
+ * 红条**只在悬停时**展开（0 → 6px），选中状态不常驻红条——
+ * All 与其他标签行为完全一致。
+ *
+ * 用宽度从 0 过渡的 span 而不是 border：border 的宽度变化会带动布局位移，
+ * 视觉上像文字在抖。文字同步右移。
+ *
+ * 选中态改用文字加粗 + 正文色来区分（无需红条也能看出当前筛选）。
  */
 function TagRow({
   label,
   count,
-  active,
   href,
+  current,
 }: {
   label: string
   count: number
-  active: boolean
   href: string
+  /** 是否为当前筛选。只影响读屏播报，不影响视觉——红条一律只在悬停时出现 */
+  current: boolean
 }) {
   return (
     <Link
       to={href}
-      aria-current={active ? 'true' : undefined}
+      aria-current={current ? 'page' : undefined}
       className="group relative flex items-center justify-between gap-2 py-2 pr-1"
     >
-      {/* 红条：宽度 0 → 3px */}
+      {/* 红条：悬停时 0 → 6px */}
       <span
         aria-hidden
         className={cn(
           'absolute inset-y-0 left-0 w-0 bg-[var(--post-accent)]',
           'transition-[width] duration-300 ease-linear',
-          active ? 'w-[3px]' : 'group-hover:w-[3px]',
+          'group-hover:w-[6px]',
         )}
       />
       <span
         className={cn(
-          'truncate pl-2.5 text-sm transition-[padding,color] duration-300 ease-linear',
-          active
-            ? 'font-semibold text-[var(--post-body)]'
-            : 'text-[var(--post-link)] group-hover:pl-4 group-hover:text-[var(--post-link-hover)]',
+          'truncate pl-2.5 text-sm text-[var(--post-link)]',
+          'transition-[padding,color] duration-300 ease-linear',
+          'group-hover:pl-4 group-hover:text-[var(--post-link-hover)]',
         )}
       >
         {label}
