@@ -26,16 +26,26 @@ import AdminPostEdit from '@/pages/admin/AdminPostEdit'
 const CONTENT = 'mx-auto max-w-5xl px-6 py-8'
 /** 全屏导航页：宽度同导航栏，但用更高更宽的间距撑满视口 */
 const FULLSCREEN = 'mx-auto max-w-5xl px-6 pt-10 pb-16'
+/**
+ * 文章列表页的标签侧栏要放在正文容器之外（贴着视口左边），
+ * 因此本页的 main 不再套 max-w-5xl，改由页面自己控制：
+ * 侧栏靠左固定，正文仍在容器里居中，宽度与其它页面一致。
+ */
+const WIDE = 'px-6 py-8'
 
 function AppLayout() {
   const { pathname } = useLocation()
   const isLanding = pathname === '/'
   const isHome = pathname === '/home'
+  /** 带标签侧栏、需要突破正文容器的页面 */
+  const isWide = pathname === '/posts' || pathname.startsWith('/tags/')
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {!isLanding && <Navbar />}
-      <main className={isLanding ? '' : isHome ? FULLSCREEN : CONTENT}>
+      <main
+        className={isLanding ? '' : isHome ? FULLSCREEN : isWide ? WIDE : CONTENT}
+      >
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<HomePage />} />

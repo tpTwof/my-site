@@ -1,26 +1,28 @@
 /**
  * [前端 · 页面] 路由 `/tags/:slug` — 单个标签下的文章列表。
  *
- * 顶部显示标签名与文章数，下方复用 PostCardList，无限滚动。
- * 标签不存在或该标签下没有已发布文章时，跳回 /posts。
+ * 布局与 /posts 一致：标签侧栏固定贴左（All 为当前选中），正文保持原宽度。
+ * 下面是与 Posts 相同的文章列表，无限滚动。
+ *
+ * 标签不存在时跳回 /posts。
  *
  * 后端关联：
- *   GET /api/tags/{slug}/posts?cursor=&limit=  → PostSummaryList
- *   GET /api/tags                              → 用来取标签展示名
+ *   GET /api/tags                       → 侧栏数据
+ *   GET /api/tags/{slug}/posts?cursor=  → 该标签下的文章
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getPostsByTag, getTags, errorMessage } from '@/lib/api'
-import type { PostSummary } from '@/types/post'
+import type { PostSummary, TagCount } from '@/types/post'
 import { PostCardList } from '@/components/ui/post-card-list'
+import { TagSidebar } from '@/components/ui/tag-sidebar'
 
 export default function PostTags() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
 
   const [posts, setPosts] = useState<PostSummary[]>([])
-  const [tagName, setTagName] = useState<string | null>(null)
+  const [tags, setTags] = useState<TagCount[]>([])
   const [total, setTotal] = useState(0)
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const [hasMore, setHasMore] = useState(true)
@@ -28,9 +30,8 @@ export default function PostTags() {
   const loaderRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef(false)
 
-  // 取标签展示名与文章数
+  // 侧栏数据 + 校验标签是否存在
   useEffect(() => {
-    if (!slug) return
     getTags()
       .then((data) => {
         const found = data.items.find((t) => t.slug === slug)
@@ -38,8 +39,8 @@ export default function PostTags() {
           navigate('/posts', { replace: true })
           return
         }
-        setTagName(found.name)
-        setTotal(found.count)
+        setTags(data.items)
+        setTotal(data.total)
       })
       .catch((err) => setError(errorMessage(err, '标签加载失败')))
   }, [slug, navigate])
@@ -63,11 +64,12 @@ export default function PostTags() {
     }
   }, [slug, cursor, hasMore])
 
-  // 切换标签时重置
+  // 切换标签时重置列表
   useEffect(() => {
     setPosts([])
     setCursor(undefined)
     setHasMore(true)
+    setError(null)
     loadingRef.current = false
   }, [slug])
 
@@ -91,28 +93,23 @@ export default function PostTags() {
 
   return (
     <div>
-      <Link
-        to="/posts"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" />
-        返回文章列表
-      </Link>
+      <TagSidebar
+        tags={tags}
+        total={total}
+        activeSlug={slug ?? null}
+        query=""
+        // 标签页不做标签搜索，忽略提交
+        onSearch={() => undefined}
+      />
 
-      <header className="mb-8 border-b border-border pb-6">
-        <h1 className="m-0 text-3xl font-bold tracking-tight">
-          <span className="text-[var(--post-accent)]">#</span>
-          {tagName ?? slug}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{total} 篇文章</p>
-      </header>
+      <div className="mx-auto max-w-5xl lg:mx-0 lg:ml-[264px] lg:max-w-[1024px]">
+        <PostCardList posts={posts} />
 
-      <PostCardList posts={posts} />
-
-      <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
-        {error && <span className="text-destructive">{error}</span>}
-        {!error && !hasMore && posts.length === 0 && '暂无文章'}
-        {!error && !hasMore && posts.length > 0 && '没有更多了'}
+        <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
+          {error && <span className="text-destructive">{error}</span>}
+          {!error && !hasMore && posts.length === 0 && '暂无文章'}
+          {!error && !hasMore && posts.length > 0 && '没有更多了'}
+        </div>
       </div>
     </div>
   )

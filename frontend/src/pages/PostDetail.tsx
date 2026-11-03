@@ -16,7 +16,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { getPost } from '@/lib/api'
-import { formatCardDate } from '@/lib/utils'
+import { cn, formatCardDate } from '@/lib/utils'
 import { LampPull } from '@/components/ui/lamp-pull'
 import type { PublicPostDetail } from '@/types/post'
 
@@ -62,6 +62,7 @@ export default function PostDetail() {
         <time className="mt-2 block text-sm text-muted-foreground">
           {formatCardDate(post.created_at)}
         </time>
+        {post.tags.length > 0 && <PostTags tags={post.tags} />}
       </header>
 
       <div className="prose prose-neutral max-w-none dark:prose-invert">
@@ -75,6 +76,28 @@ export default function PostDetail() {
 
       <PostNeighbours previous={post.previous} next={post.next} />
     </article>
+  )
+}
+
+/** 文章标签行，显示在日期下方。点击跳到该标签的文章列表。 */
+function PostTags({ tags }: { tags: PublicPostDetail['tags'] }) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      {tags.map((tag, i) => (
+        <span key={tag.slug} className="inline-flex items-center gap-2">
+          {i > 0 && <span className="text-muted-foreground">,</span>}
+          <Link
+            to={`/tags/${encodeURIComponent(tag.slug)}`}
+            className={cn(
+              'text-[var(--post-link)] transition-colors',
+              'hover:text-[var(--post-link-hover)] hover:underline',
+            )}
+          >
+            #{tag.name}
+          </Link>
+        </span>
+      ))}
+    </div>
   )
 }
 

@@ -1,15 +1,16 @@
 /**
  * [前端 · 页面] 路由 `/posts` — 公开博客列表（带标签侧栏与标签搜索）。
  *
- * 布局：左侧标签栏（含搜索），右侧文章列表。
+ * 布局：标签侧栏**固定在视口左侧**（不在正文容器内），正文文章列表
+ * 仍按原来的 max-w-5xl 居中，宽度不受侧栏影响。
  * 无限滚动（IntersectionObserver + 游标分页），只展示已发布文章。
  *
  * 筛选状态放在 URL 里（?tag=java&q=sql），因此可分享、可刷新、
  * 浏览器前进后退可用。切换筛选时清空游标、回到第一页、滚到顶部。
  *
  * 后端关联：
- *   GET /api/tags                    → 标签列表与各标签文章数
- *   GET /api/posts?tag=&cursor=      → 文章列表（tag 可选）
+ *   GET /api/tags               → 标签列表与各标签文章数
+ *   GET /api/posts?tag=&cursor= → 文章列表（tag 可选）
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -90,41 +91,33 @@ export default function Posts() {
     return () => observer.disconnect()
   }, [loadMore])
 
-  /** 切换标签。搜索词保留——它只管左侧列表，与文章无关 */
-  function selectTag(slug: string | null) {
-    const next = new URLSearchParams(params)
-    if (slug) next.set('tag', slug)
-    else next.delete('tag')
-    setParams(next, { replace: true })
-    window.scrollTo(0, 0)
-  }
-
   /** 提交搜索。只影响左侧标签列表，不改动文章筛选 */
   function submitSearch(query: string) {
     const next = new URLSearchParams(params)
     if (query) next.set('q', query)
     else next.delete('q')
     setParams(next, { replace: true })
+    window.scrollTo(0, 0)
   }
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+    <div>
+      {/* 侧栏自己处理定位：lg 以上固定贴左（left-6, w-56，右边缘 248），
+          窄屏回到文档流排在列表上方 */}
       <TagSidebar
         tags={tags}
         total={total}
         activeSlug={activeTag}
         query={searchQuery}
-        onSelect={selectTag}
         onSearch={submitSearch}
       />
 
-      <div className="min-w-0 flex-1">
-        {activeTag && (
-          <p className="mb-4 text-sm text-muted-foreground">
-            标签筛选：<span className="text-[var(--post-link)]">#{activeTag}</span>
-          </p>
-        )}
-
+      {/*
+        正文保持 max-w-5xl 的宽度，并避开左侧固定侧栏：
+        lg 以上给 264px 左内边距（侧栏 248 + 16 间距），再去掉居中，
+        否则 mx-auto 会把它推回 x=208 被侧栏压住。
+      */}
+      <div className="mx-auto max-w-5xl lg:mx-0 lg:ml-[264px] lg:max-w-[1024px]">
         <PostCardList posts={posts} />
 
         <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
