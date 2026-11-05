@@ -92,8 +92,8 @@ export default function PostTags() {
   }, [loadMore])
 
   return (
-    /* 与 /posts 相同：正文居中，侧栏贴在正文左侧 272px 的预留区域内 */
-    <div className="mx-auto max-w-5xl lg:relative lg:max-w-[1296px]">
+    /* 与 /posts 相同：正文宽度随屏幕缩放，保持居中，侧栏挂在左侧 */
+    <div className="relative mx-auto max-w-5xl lg:max-w-[min(1024px,calc(100vw-592px))]">
       <TagSidebar
         tags={tags}
         total={total}
@@ -103,14 +103,12 @@ export default function PostTags() {
         onSearch={() => undefined}
       />
 
-      <div className="lg:pl-[272px]">
-        <PostCardList posts={posts} />
+      <PostCardList posts={posts} />
 
-        <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
-          {error && <span className="text-destructive">{error}</span>}
-          {!error && !hasMore && posts.length === 0 && '暂无文章'}
-          {!error && !hasMore && posts.length > 0 && '没有更多了'}
-        </div>
+      <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
+        {error && <span className="text-destructive">{error}</span>}
+        {!error && !hasMore && posts.length === 0 && '暂无文章'}
+        {!error && !hasMore && posts.length > 0 && '没有更多了'}
       </div>
     </div>
   )

@@ -56,14 +56,15 @@ export function TagSidebar({
   return (
     <>
       {/*
-        lg 以上：绝对定位到正文容器左侧预留的 272px 内边距里
-        （left-0, w-56，与正文间距 48px）。正文容器整体右移时侧栏跟着走，
-        不会被切到视口外。
-        外层 absolute 负责横向位置，内层 sticky 负责随滚动停靠——
-        两个属性不能放同一个元素上（position 只能有一个值）。
+        lg 以上：挂在正文容器的左边界之外（right-full + 48px 间距）。
+        正文容器左右留白相等（mx-auto），侧栏完全不参与这个计算——
+        它只是贴在正文左边。
+
+        外层 absolute 负责横向位置，内层 sticky 负责随滚动停靠；
+        position 只能有一个值，所以这两件事必须分开在两层元素上。
         窄屏时外层退回普通文档流，排在列表上方。
       */}
-      <div className="mb-8 lg:absolute lg:top-0 lg:left-0 lg:mb-0 lg:w-56">
+      <div className="mb-8 lg:absolute lg:top-0 lg:right-full lg:mr-12 lg:mb-0 lg:w-56">
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto">
           <SearchBox
             value={draft}

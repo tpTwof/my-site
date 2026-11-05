@@ -102,15 +102,22 @@ export default function Posts() {
 
   return (
     /*
-      正文居中，侧栏紧贴正文左侧。
-      外层容器宽度 = 侧栏 272（224 + 48 间距） + 正文 1024 = 1296，
-      整体 mx-auto 居中；正文放在右侧 1024 的区域内（lg:pl-[272px]），
-      侧栏绝对定位到左侧那 272px 里。
+      正文居中，侧栏挂在正文左侧、不参与居中计算；正文宽度跟着屏幕缩放。
 
-      为什么不用「容器就 1024、侧栏 right-full 挂到外面」：1440 宽下
-      居中的 1024 容器左边只有 208px，塞不下 272px 的侧栏，会被切出屏幕。
+      正文最大 1024（与其它页面一致），但同时不能宽到让左边放不下侧栏。
+      左边可用空间 = (容器宽 - 正文宽) / 2，要求 >= 272（侧栏 224 + 间距 48），
+      即 正文宽 <= 容器宽 - 544。
+      容器是 <main> 的内容区（视口宽 - 48 的 px-6 内边距），
+      所以写成 calc(100vw - 592px)（544 + 48）。
+
+      宽度取 min(1024px, 100vw - 592px)：
+        1920 → 1024（不受限）
+        1600 → 1024（左边 288）
+        1440 → 848（左边 272，侧栏正好放下）
+        1280 → 688（左边 272）
+      再用 mx-auto 居中——左右留白永远相等，侧栏永远完整。
     */
-    <div className="mx-auto max-w-5xl lg:relative lg:max-w-[1296px]">
+    <div className="relative mx-auto max-w-5xl lg:max-w-[min(1024px,calc(100vw-592px))]">
       <TagSidebar
         tags={tags}
         total={total}
@@ -119,14 +126,12 @@ export default function Posts() {
         onSearch={submitSearch}
       />
 
-      <div className="lg:pl-[272px]">
-        <PostCardList posts={posts} />
+      <PostCardList posts={posts} />
 
-        <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
-          {error && <span className="text-destructive">{error}</span>}
-          {!error && !hasMore && posts.length === 0 && '暂无文章'}
-          {!error && !hasMore && posts.length > 0 && '没有更多了'}
-        </div>
+      <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
+        {error && <span className="text-destructive">{error}</span>}
+        {!error && !hasMore && posts.length === 0 && '暂无文章'}
+        {!error && !hasMore && posts.length > 0 && '没有更多了'}
       </div>
     </div>
   )
