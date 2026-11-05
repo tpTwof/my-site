@@ -101,9 +101,12 @@ export default function Posts() {
   }
 
   return (
-    <div>
-      {/* 侧栏自己处理定位：lg 以上固定贴左（left-6, w-56，右边缘 248），
-          窄屏回到文档流排在列表上方 */}
+    /*
+      侧栏与正文放在同一个居中容器里：容器宽度 = 侧栏 224 + 间距 48 + 正文 1024，
+      整体 mx-auto 居中，所以侧栏永远紧贴正文左侧，不会在宽屏下被甩到边缘。
+      窄屏时容器变窄，侧栏回到文档流排在上方（见 TagSidebar 的 lg: 断点）。
+    */
+    <div className="mx-auto max-w-5xl lg:flex lg:max-w-[1296px] lg:gap-12">
       <TagSidebar
         tags={tags}
         total={total}
@@ -112,12 +115,8 @@ export default function Posts() {
         onSearch={submitSearch}
       />
 
-      {/*
-        正文保持 max-w-5xl 的宽度，并避开左侧固定侧栏：
-        lg 以上给 264px 左内边距（侧栏 248 + 16 间距），再去掉居中，
-        否则 mx-auto 会把它推回 x=208 被侧栏压住。
-      */}
-      <div className="mx-auto max-w-5xl lg:mx-0 lg:ml-[264px] lg:max-w-[1024px]">
+      {/* 正文保持 max-w-5xl，与其它页面宽度一致 */}
+      <div className="min-w-0 max-w-5xl flex-1">
         <PostCardList posts={posts} />
 
         <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">

@@ -59,10 +59,15 @@ export function TagSidebar({
         lg 以上：固定贴左边，不占正文容器的宽度。
         w-56 + left-6，与正文容器的 px-6 对齐。
       */}
+      {/*
+        lg 以上：与正文同处一个居中的 flex 容器，自身 sticky 跟随滚动。
+        不再用 fixed——fixed 是相对视口定位，会在宽屏下被甩到屏幕最左边，
+        与正文之间留下大片空白。
+      */}
       <aside
         className={cn(
-          'mb-8 lg:fixed lg:top-40 lg:left-6 lg:z-10 lg:mb-0 lg:max-h-[calc(100vh-12rem)]',
-          'lg:w-56 lg:overflow-y-auto',
+          'mb-8 lg:sticky lg:top-32 lg:mb-0 lg:w-56 lg:shrink-0 lg:self-start',
+          'lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto',
         )}
       >
         <SearchBox value={draft} onChange={setDraft} onSubmit={() => onSearch(draft.trim())} />

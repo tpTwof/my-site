@@ -92,7 +92,8 @@ export default function PostTags() {
   }, [loadMore])
 
   return (
-    <div>
+    /* 与 /posts 相同的布局：侧栏与正文同处一个居中容器 */
+    <div className="mx-auto max-w-5xl lg:flex lg:max-w-[1296px] lg:gap-12">
       <TagSidebar
         tags={tags}
         total={total}
@@ -102,7 +103,7 @@ export default function PostTags() {
         onSearch={() => undefined}
       />
 
-      <div className="mx-auto max-w-5xl lg:mx-0 lg:ml-[264px] lg:max-w-[1024px]">
+      <div className="min-w-0 max-w-5xl flex-1">
         <PostCardList posts={posts} />
 
         <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">
