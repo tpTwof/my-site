@@ -92,8 +92,8 @@ export default function PostTags() {
   }, [loadMore])
 
   return (
-    /* 与 /posts 相同的布局：侧栏与正文同处一个居中容器 */
-    <div className="mx-auto max-w-5xl lg:flex lg:max-w-[1296px] lg:gap-12">
+    /* 与 /posts 相同：正文居中，侧栏贴在正文左侧 272px 的预留区域内 */
+    <div className="mx-auto max-w-5xl lg:relative lg:max-w-[1296px]">
       <TagSidebar
         tags={tags}
         total={total}
@@ -103,7 +103,7 @@ export default function PostTags() {
         onSearch={() => undefined}
       />
 
-      <div className="min-w-0 max-w-5xl flex-1">
+      <div className="lg:pl-[272px]">
         <PostCardList posts={posts} />
 
         <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">

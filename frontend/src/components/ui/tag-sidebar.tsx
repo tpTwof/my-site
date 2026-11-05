@@ -56,44 +56,44 @@ export function TagSidebar({
   return (
     <>
       {/*
-        lg 以上：固定贴左边，不占正文容器的宽度。
-        w-56 + left-6，与正文容器的 px-6 对齐。
+        lg 以上：绝对定位到正文容器左侧预留的 272px 内边距里
+        （left-0, w-56，与正文间距 48px）。正文容器整体右移时侧栏跟着走，
+        不会被切到视口外。
+        外层 absolute 负责横向位置，内层 sticky 负责随滚动停靠——
+        两个属性不能放同一个元素上（position 只能有一个值）。
+        窄屏时外层退回普通文档流，排在列表上方。
       */}
-      {/*
-        lg 以上：与正文同处一个居中的 flex 容器，自身 sticky 跟随滚动。
-        不再用 fixed——fixed 是相对视口定位，会在宽屏下被甩到屏幕最左边，
-        与正文之间留下大片空白。
-      */}
-      <aside
-        className={cn(
-          'mb-8 lg:sticky lg:top-32 lg:mb-0 lg:w-56 lg:shrink-0 lg:self-start',
-          'lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto',
-        )}
-      >
-        <SearchBox value={draft} onChange={setDraft} onSubmit={() => onSearch(draft.trim())} />
-
-        <h2 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Categories
-        </h2>
-
-        <nav className="flex flex-col">
-          <TagRow
-            label="All"
-            count={total}
-            href="/posts"
-            current={activeSlug === null}
+      <div className="mb-8 lg:absolute lg:top-0 lg:left-0 lg:mb-0 lg:w-56">
+        <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto">
+          <SearchBox
+            value={draft}
+            onChange={setDraft}
+            onSubmit={() => onSearch(draft.trim())}
           />
-          {visible.map((tag) => (
+
+          <h2 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Categories
+          </h2>
+
+          <nav className="flex flex-col">
             <TagRow
-              key={tag.slug}
-              label={tag.name}
-              count={tag.count}
-              href={`/tags/${encodeURIComponent(tag.slug)}`}
-              current={activeSlug === tag.slug}
+              label="All"
+              count={total}
+              href="/posts"
+              current={activeSlug === null}
             />
-          ))}
-        </nav>
-      </aside>
+            {visible.map((tag) => (
+              <TagRow
+                key={tag.slug}
+                label={tag.name}
+                count={tag.count}
+                href={`/tags/${encodeURIComponent(tag.slug)}`}
+                current={activeSlug === tag.slug}
+              />
+            ))}
+          </nav>
+        </aside>
+      </div>
     </>
   )
 }
