@@ -1,7 +1,7 @@
 # tpTwo 站点接口规范
 
-> **当前阶段范围**: 站点入口 + 博客文章 CRUD + 管理端登录鉴权
-> **明确排除**: 多用户/注册、标签分类、评论、统计、搜索、媒体上传
+> **当前阶段范围**: 站点入口、博客文章 CRUD、标签分类、管理端登录鉴权及日常路程管理
+> **明确排除**: 多用户/注册、评论、统计、全文搜索与独立媒体上传服务；路程图片通过记录的 `image` 字段保存
 
 ---
 
@@ -12,7 +12,9 @@
 | 站点接口前缀 | `/api` |
 | 鉴权接口前缀 | `/api/auth` |
 | 公开博客接口前缀 | `/api/posts` |
-| 管理接口前缀 | `/api/admin/posts`（**需登录**） |
+| 管理接口前缀 | `/api/admin/posts`、`/api/admin/journey`（**需登录**） |
+| 标签接口前缀 | `/api/tags` |
+| 路程接口前缀 | `/api/journey` |
 | 数据格式 | JSON, UTF-8 |
 | 分页方式 | 游标分页 (Cursor-based)，游标为 base64url 不透明字符串 |
 | 正文格式 | 原始 Markdown 存取，前端渲染 |
@@ -20,7 +22,7 @@
 | URL 标识 | 自定义 Slug（公开接口）/ UUID（管理接口） |
 | 会话 | httpOnly Cookie `tp_admin`，默认 7 天 |
 | 数据库 | SQLite（`DATABASE_URL` 环境变量配置） |
-| ORM | SQLModel（查询/写入统一收敛在 `backend/crud/`） |
+| ORM | SQLModel；文章与标签的查询/写入位于 `backend/crud/`，路程当前集中于 `backend/routers/journey.py` |
 
 ### 错误响应约定
 
@@ -32,7 +34,7 @@
 | 409 | Slug 已被占用 |
 | 422 | 请求体校验失败（如非法 `status`） |
 
-错误体统一为 `{"detail": "..."}`（422 时为 FastAPI 校验错误数组）。
+错误体统一为 `{"detail": ...}`；FastAPI 请求校验错误的 `detail` 为数组，业务校验错误（包括路程图片或空白文字校验）为字符串。
 
 ---
 
@@ -93,7 +95,32 @@ HttpOnly; SameSite=Lax; Path=/`（HTTPS 下附加 `Secure`）。
 }
 ```
 
-> 后续会扩展为「个人介绍 / 精选内容 / 各板块入口」等。博客文章不在此接口返回。
+> 当前前端 About me 首页不调用此基本信息接口；路程数据改用 `/api/journey`。`/works` 与 `/contact` 未新增后端接口。博客文章不在此接口返回。
+
+### 路程图
+
+- `GET /api/journey`：公开读取全部路程，按创建时间、ID 升序返回数组。
+- `POST /api/admin/journey`：管理员新建，成功返回 201 与记录。
+- `PUT /api/admin/journey/{id}`：管理员完整更新文字、日期与图片，返回 200；不存在返回 404。
+- `DELETE /api/admin/journey/{id}`：管理员删除，成功返回 204；不存在返回 404。
+- 写接口沿用 `require_auth`，未登录返回 401。
+
+请求体为 `{ "text": "日常寄语", "date": "2026.11.07", "image": null }`。
+`text` 必填且不可全为空白，最长 3000 字符；`date` 可省略，最长 40 字符。
+`image` 可为空、http(s) URL、站内绝对路径，或 PNG/JPEG/WebP/GIF 的 base64 data URL，最长 3000000 字符。
+前端选择的图片限制为 2MB；不接受 SVG data URL。响应另包含 `id` 与 `created_at`。
+数据保存在 `JourneyEntry` 表，启动时自动创建；尚未实现分页、排序管理或多图。
+
+首页三个固定介绍节点由前端 `INTRO` 提供，不在此数组中，也不通过写接口管理。
+实际显示顺序为固定介绍后追加接口返回的记录；末节点红色、沿线拖动与渐变均由前端根据该完整列表计算，不额外保存交互状态。
+
+---
+
+## 标签 · 公开接口（无需认证）
+
+- `GET /api/tags`：返回 `{ "items": [{ "slug": "cpp", "name": "cpp", "count": 1 }], "total": 1 }`。`count` 只统计已发布文章，标签按文章数降序排列；`total` 为已发布文章总数，供 All 分类使用。
+- `GET /api/tags/{slug}/posts`：返回该标签下的已发布文章列表，响应结构与 `/api/posts` 相同；支持 `cursor` 与 `limit`（默认 10，最大 50），标签不存在返回 404。
+- 分类名称和总数来自标签接口，不受前端侧栏搜索或当前已加载分页条数影响。
 
 ---
 
@@ -312,16 +339,15 @@ backend/
 └── routers/           # 仅 HTTP 层：参数解析、状态码、错误映射
 ```
 
-- **router 不直接写 SQL/select**：一律通过 `crud.` 调用
+- 文章与标签的 **router 不直接写 SQL/select**，通过 `crud.` 调用；当前路程功能的表、输入 schema 与读写暂集中在 `routers/journey.py`，由 `database.init_db()` 导入注册。
 - **列表与详情用不同 schema**：`PostSummary`（无正文）/ `PostDetail`（含正文）
 
 ---
 
 ## 后续阶段（明确排除在当前范围外）
 
-- 🏷️ 标签 / 分类系统
 - 💬 评论系统
 - 📊 访问量统计
 - 🔍 全文搜索
-- 🖼️ 图片上传 / 媒体管理（封面图已确认不做）
+- 🖼️ 独立图片上传 / 媒体管理（路程已有单张图片字段，封面图已确认不做）
 - 👥 多用户 / 注册（当前是单管理员，账号来自环境变量）

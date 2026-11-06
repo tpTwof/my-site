@@ -16,6 +16,7 @@ import { getPostsByTag, getTags, errorMessage } from '@/lib/api'
 import type { PostSummary, TagCount } from '@/types/post'
 import { PostCardList } from '@/components/ui/post-card-list'
 import { TagSidebar } from '@/components/ui/tag-sidebar'
+import { PostCategoryHeading } from '@/components/post-category-heading'
 
 export default function PostTags() {
   const { slug } = useParams<{ slug: string }>()
@@ -103,6 +104,10 @@ export default function PostTags() {
         onSearch={() => undefined}
       />
 
+      <PostCategoryHeading
+        name={tags.find((tag) => tag.slug === slug)?.name ?? slug ?? 'All'}
+        count={tags.find((tag) => tag.slug === slug)?.count ?? null}
+      />
       <PostCardList posts={posts} />
 
       <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">

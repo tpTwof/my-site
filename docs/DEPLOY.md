@@ -169,6 +169,8 @@ server {
 
     # 反代 API。注意带上 X-Forwarded-Proto，后端据此决定 Cookie 是否加 Secure
     location /api/ {
+        # 路程图片以 JSON data URL 上传（原图最大 2MB），为 base64 留出余量
+        client_max_body_size 4m;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

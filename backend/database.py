@@ -24,6 +24,7 @@ def init_db():
     import models.login_attempt  # noqa: F401
     import models.post  # noqa: F401
     import models.tag  # noqa: F401
+    import routers.journey  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
 

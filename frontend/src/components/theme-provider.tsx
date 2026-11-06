@@ -19,14 +19,10 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as Theme) || 'system'
-    }
-    return 'system'
-  })
+  // 全站默认黑色，不再恢复旧的浅色或跟随系统设置；白底仅用于首页开场。
+  const [theme, setTheme] = useState<Theme>('dark')
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark')
 
   useEffect(() => {
     const root = document.documentElement

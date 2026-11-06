@@ -1,49 +1,72 @@
-/**
- * [前端 · 页面] 路由 `/home` — 站点首页导航页。
- *
- * 全屏大标题导航，带逐字位移与箭头滑入动效。导航项在下方配置，
- * 加一项即自动渲染；href 以 https:// 或 mailto: 开头时按外链处理。
- *
- * Admin 一项只在已登录时出现——访客看不到管理入口，也就不必点进去
- * 才发现要登录。
- *
- * 后端关联：不请求接口。登录态来自 AuthProvider（见 GET /api/auth/me）。
- */
-import { InteractiveHoverLinks } from '@/components/ui/interactive-hover-links'
-import type { HoverLink } from '@/components/ui/interactive-hover-links'
-import { useAuth } from '@/components/auth-provider'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { JourneyMap } from '@/components/journey-map'
+import { ElasticAboutHeading } from '@/components/elastic-about-heading'
+import './home.css'
 
-/**
- * 首页导航项。加一项就在这里加一条，无需改动组件。
- *
- * `adminOnly: true` 的项只有登录后才会渲染。
- */
-interface HomeLink extends HoverLink {
-  adminOnly?: boolean
+const WELCOME = 'Welcome to tpTwo'
+// 只有文档最初就在首页时才播放。直接打开其他页面后站内进入首页也不播放。
+// 浏览器刷新会重新执行模块；Link 跳转和历史前进后退不会重置此标记。
+const enteredOnHome = /^\/(home\/?)?$/.test(window.location.pathname)
+let introVisited = !enteredOnHome
+type Phase = 'fly' | 'wave' | 'reveal' | 'done'
+function initialPhase(): Phase {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'done'
+  return introVisited ? 'done' : 'fly'
 }
 
-const HOME_LINKS: HomeLink[] = [
-  { heading: 'Posts', subheading: 'Read the writing', href: '/posts' },
-  {
-    heading: 'Admin',
-    subheading: 'Write and manage',
-    href: '/admin/posts',
-    adminOnly: true,
-  },
-  {
-    heading: 'GitHub',
-    subheading: 'Code and forks',
-    href: 'https://github.com/tpTwof',
-  },
-]
-
 export default function HomePage() {
-  const { username } = useAuth()
-  const links = HOME_LINKS.filter((link) => !link.adminOnly || username)
+  const [phase, setPhase] = useState<Phase>(initialPhase)
+  useEffect(() => {
+    introVisited = true
+  }, [])
+  useEffect(() => {
+    const root = document.documentElement
+    root.dataset.homeSurface = phase === 'done' ? 'dark' : phase === 'reveal' ? 'reveal' : 'light'
+    const previousOverflow = document.body.style.overflow
+    if (phase !== 'done') document.body.style.overflow = 'hidden'
+    return () => {
+      delete root.dataset.homeSurface
+      document.body.style.overflow = previousOverflow
+    }
+  }, [phase])
 
   return (
-    <div className="flex min-h-[calc(100vh-13.5rem)] flex-col justify-center">
-      <InteractiveHoverLinks links={links} />
-    </div>
+    <>
+      {phase !== 'done' && (
+        <div className="home-intro">
+          <h1 aria-label={WELCOME} className={`home-welcome home-welcome--${phase}`}>
+            {Array.from(WELCOME).map((letter, index) => (
+              <span
+                key={index}
+                aria-hidden="true"
+                style={{ '--i': index, '--from-x': `${Math.cos(index * 2.4) * 150}vw`, '--from-y': `${Math.sin(index * 2.4) * 150}vh`, '--turn': `${(index % 2 ? 1 : -1) * (90 + index * 12)}deg` } as CSSProperties}
+                onAnimationEnd={index === WELCOME.length - 1 ? () => {
+                  if (phase === 'fly') setPhase('wave')
+                  if (phase === 'wave') setPhase('reveal')
+                } : undefined}
+              >{letter === ' ' ? '\u00a0' : letter}</span>
+            ))}
+          </h1>
+          <button className="home-skip" onClick={() => setPhase('done')}>跳过动画</button>
+        </div>
+      )}
+
+      {(phase === 'done' || phase === 'reveal') && (
+        <div className={`about-home ${phase === 'reveal' ? 'home-curtain' : ''}`} onAnimationEnd={phase === 'reveal' ? (event) => {
+          if (event.target === event.currentTarget && event.animationName === 'home-open') setPhase('done')
+        } : undefined}>
+          <section className="about-heading">
+            <p className="about-eyebrow">THE PERSON BEHIND THE WORDS</p>
+            <ElasticAboutHeading />
+            <p className="about-lead">我是 tpTwo<br />在这里，留下一些思考与足迹</p>
+            <a className="about-scroll" href="#journey">时间长廊<span aria-hidden="true">↓</span></a>
+          </section>
+          <section id="journey" className="about-journey" aria-label="我的路程">
+            <JourneyMap />
+          </section>
+          <footer className="about-footer"><span>tpTwo / 一路向前</span><a href="#journey">↑</a></footer>
+        </div>
+      )}
+    </>
   )
 }

@@ -1,20 +1,22 @@
 /**
  * [前端 · 应用根组件] 挂载主题、登录态、路由、全局 Toast。
  *
- * 路由表见下方 <Routes>：/ 入口页、/home 首页导航、/posts 博客列表、
- * /posts/:slug 详情、/login 登录、/admin/posts* 管理端（需登录）。
+ * 路由表见下方 <Routes>：/ 重定向至 /home 欢迎首页、/posts 博客列表、
+ * /posts/:slug 详情、/works 作品、/contact 联系、/login 登录、
+ * /admin/posts* 管理端（需登录）。
  *
  * 后端关联：本文件不发请求；登录态由 AuthProvider 维护，
  *   页面各自通过 src/lib/api.ts 调用后端。
  */
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/components/auth-provider'
 import { RequireAuth } from '@/components/require-auth'
 import { Navbar } from '@/components/navbar'
 import { Toaster } from '@/components/ui/sonner'
-import Landing from '@/pages/Landing'
 import HomePage from '@/pages/HomePage'
+import Works from '@/pages/Works'
+import Contact from '@/pages/Contact'
 import Posts from '@/pages/Posts'
 import PostDetail from '@/pages/PostDetail'
 import PostTags from '@/pages/PostTags'
@@ -22,10 +24,8 @@ import Login from '@/pages/Login'
 import AdminPostList from '@/pages/admin/AdminPostList'
 import AdminPostEdit from '@/pages/admin/AdminPostEdit'
 
-/** 与导航栏共用同一宽度上限，保证左右对齐 */
+/** 正文居中显示，顶部导航独立占满屏幕宽度 */
 const CONTENT = 'mx-auto max-w-5xl px-6 py-8'
-/** 全屏导航页：宽度同导航栏，但用更高更宽的间距撑满视口 */
-const FULLSCREEN = 'mx-auto max-w-5xl px-6 pt-10 pb-16'
 /**
  * 文章列表页的标签侧栏要放在正文容器之外（贴着视口左边），
  * 因此本页的 main 不再套 max-w-5xl，改由页面自己控制：
@@ -35,20 +35,22 @@ const WIDE = 'px-6 py-8'
 
 function AppLayout() {
   const { pathname } = useLocation()
-  const isLanding = pathname === '/'
-  const isHome = pathname === '/home'
+  const isHome = pathname === '/' || pathname === '/home'
   /** 带标签侧栏、需要突破正文容器的页面 */
   const isWide = pathname === '/posts' || pathname.startsWith('/tags/')
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {!isLanding && <Navbar />}
+      <Navbar />
       <main
-        className={isLanding ? '' : isHome ? FULLSCREEN : isWide ? WIDE : CONTENT}
+        className={isHome ? '' : isWide ? WIDE : CONTENT}
+        data-reading-page={pathname.startsWith('/posts') || pathname.startsWith('/tags/') ? '' : undefined}
       >
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<HomePage />} />
+          <Route path="/works" element={<Works />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
           <Route path="/tags/:slug" element={<PostTags />} />

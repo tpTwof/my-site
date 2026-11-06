@@ -58,104 +58,77 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  /* ── 文章列表：取自参考站的原站配色 ──
-     组件里只用 --post-* 变量，不直接写颜色值；
-     亮色下与参考站完全一致，暗色只改这里。 */
-  --post-link: #1122cc;
-  --post-link-hover: #333366;
-  --post-accent: #ce2323;
-  --post-muted: #8d8d8d;
-  --post-body: #000000;
-  --post-rule: #eeeeee;
-
-  /* ── 下拉灯绳 / 回到顶部 ──
-     白绳放在白底上对比度 1:1，全靠描边给轮廓。
-     描边不能太淡，否则整根绳子糊成一片灰影。 */
-  --lamp-rope: #ffffff;
-  --lamp-bead: #ffffff;
-  --lamp-outline: #9ca3af;
-
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+:root, .dark {
+  /* 黑白为底，绿标识交互，红标识强调与危险操作。 */
+  --brand-black: #101010;
+  --brand-white: #f4f4f2;
+  --brand-green: #8df58b;
+  --brand-red: #ff6464;
+  --background: var(--brand-black);
+  --foreground: var(--brand-white);
+  --card: #191919;
+  --card-foreground: var(--foreground);
+  --popover: #191919;
+  --popover-foreground: var(--foreground);
+  --primary: var(--brand-green);
+  --primary-foreground: var(--brand-black);
+  --secondary: #262626;
+  --secondary-foreground: var(--foreground);
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #203020;
+  --accent-foreground: var(--brand-green);
+  --destructive: var(--brand-red);
+  --border: #303030;
+  --input: #3b3b3b;
+  --ring: var(--brand-green);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --post-link: var(--brand-green);
+  --post-link-hover: var(--brand-white);
+  --post-accent: var(--brand-red);
+  --post-muted: var(--muted-foreground);
+  --post-body: var(--foreground);
+  --post-rule: var(--border);
+  --lamp-rope: var(--brand-white);
+  --lamp-bead: var(--brand-white);
+  --lamp-outline: #666666;
+  --chart-1: var(--brand-green);
+  --chart-2: var(--brand-red);
+  --chart-3: var(--brand-white);
+  --chart-4: #808080;
+  --chart-5: #404040;
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand-green);
+  --sidebar-primary-foreground: var(--brand-black);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--brand-green);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-green);
 }
 
-.dark {
-  /* 文章列表配色（暗色）：提亮以保证对比度，具体色值待定 */
-  --post-link: #7aa2ff;
-  --post-link-hover: #a8c4ff;
-  --post-accent: #e05555;
-  --post-muted: #9ca3af;
-  --post-body: #e5e7eb;
-  --post-rule: #2e303a;
-
-  /* 下拉灯绳（暗色）：白绳天然跳出来，描边退到深灰避免发光边 */
-  --lamp-rope: #ffffff;
-  --lamp-bead: #ffffff;
-  --lamp-outline: #3f3f46;
-
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+::selection { background: var(--brand-green); color: var(--brand-black); }
+[data-reading-page] {
+  --brand-green: var(--brand-white);
+  --post-link: var(--brand-white);
+  --post-link-hover: var(--brand-white);
+  --primary: var(--brand-white);
+  --ring: var(--brand-white);
+  --accent: #262626;
+  --accent-foreground: var(--brand-white);
 }
+.prose a { color: var(--brand-green); text-decoration-color: currentColor; }
+.prose a:hover { color: var(--brand-white); }
+.prose blockquote { border-left-color: var(--brand-red); }
+.prose pre, .prose .hljs { background: #191919; color: var(--brand-white); }
+.prose .hljs-keyword, .prose .hljs-selector-tag, .prose .hljs-deletion,
+.prose .hljs-literal, .prose .hljs-number { color: var(--brand-red); }
+.prose .hljs-string, .prose .hljs-title, .prose .hljs-addition,
+.prose .hljs-attr, .prose .hljs-built_in, .prose .hljs-symbol,
+.prose .hljs-regexp, .prose .hljs-meta { color: var(--brand-green); }
+.prose .hljs-comment, .prose .hljs-quote { color: var(--muted-foreground); }
+.prose .hljs-variable, .prose .hljs-params, .prose .hljs-subst,
+.prose .hljs-name, .prose .hljs-tag, .prose .hljs-type { color: var(--brand-white); }
 
 @layer base {
   * {

@@ -7,6 +7,8 @@
  *
  * 后端关联：不请求接口。
  */
+import { useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 
 interface SocialLink {
   label: string
@@ -33,26 +35,46 @@ const SOCIAL_LINKS: SocialLink[] = [
   {
     label: 'GitHub',
     href: 'https://github.com/tpTwof',
-    icon: <GithubIcon className="size-5" />,
+    icon: <GithubIcon className="size-6" />,
   },
 ]
 
-export function SocialLinks() {
+function SocialLinkButton({ label, href, icon }: SocialLink) {
+  const [turns, setTurns] = useState(0)
+  const reducedMotion = useReducedMotion()
+
   return (
-    <div className="flex items-center gap-1">
-      {SOCIAL_LINKS.map(({ label, href, icon }) => (
-        <a
-          key={href}
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          title={label}
-          aria-label={label}
-          className="inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={label}
+      aria-label={label}
+      onPointerEnter={(event) => {
+        if (event.pointerType !== 'touch') setTurns((value) => value + 1)
+      }}
+      onFocus={(event) => {
+        if (event.currentTarget.matches(':focus-visible')) setTurns((value) => value + 1)
+      }}
+      className="group/social inline-flex size-11 shrink-0 items-center justify-center text-inherit focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:size-12"
+    >
+      <span className="inline-flex scale-100 transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/social:scale-125 group-focus-visible/social:scale-125 motion-reduce:transition-none">
+        <motion.span
+          className="inline-flex"
+          animate={{ rotate: reducedMotion ? 0 : turns * 360 }}
+          transition={{ duration: reducedMotion ? 0 : 0.75, ease: [0.22, 1, 0.36, 1] }}
         >
           {icon}
-        </a>
-      ))}
-    </div>
+        </motion.span>
+      </span>
+    </a>
+  )
+}
+
+export function SocialLinks() {
+  return (
+    <>
+      {SOCIAL_LINKS.map((link) => <SocialLinkButton key={link.href} {...link} />)}
+    </>
   )
 }

@@ -1,0 +1,322 @@
+html[data-home-surface='dark'] {
+  --background: #101010;
+  --foreground: #f4f4f2;
+  --muted-foreground: #aaa;
+  --muted: #252525;
+  --border: #333;
+  --accent: #203020;
+  --accent-foreground: var(--brand-green);
+}
+
+html[data-home-surface='light'],
+html[data-home-surface='reveal'] {
+  --background: #fff;
+  --foreground: #171717;
+  --muted-foreground: #777;
+}
+
+.home-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #fff;
+  color: #171717;
+}
+
+.home-welcome {
+  margin: 0;
+  white-space: nowrap;
+  font-size: clamp(24px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+
+.home-welcome>span {
+  display: inline-block;
+}
+
+.home-welcome--fly>span {
+  animation: welcome-fly 1.4s cubic-bezier(.2, .75, .25, 1) both;
+  animation-delay: calc(var(--i) * 40ms);
+}
+
+.home-welcome--wave>span {
+  animation: welcome-wave .75s ease-in-out both;
+  animation-delay: calc(var(--i) * 40ms);
+}
+
+@keyframes welcome-fly {
+  from {
+    transform: translate(var(--from-x), var(--from-y)) rotate(var(--turn));
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes welcome-wave {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  40% {
+    transform: translate(12px, -12px);
+  }
+
+  70% {
+    transform: translate(4px, 3px);
+  }
+}
+
+.home-skip {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  color: #777;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 12px;
+}
+
+/* 保持正文在正常布局中，结束时只移除 transform，避免 fixed → static 重排。 */
+.home-curtain {
+  position: relative;
+  z-index: 45;
+  transform-origin: top;
+  animation: home-open 1.8s cubic-bezier(.45, 0, .2, 1) both;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.home-curtain::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -120px;
+  height: 121px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: #101010;
+  transform-origin: bottom;
+  animation: home-cap 1.8s cubic-bezier(.45, 0, .2, 1) both;
+}
+
+@keyframes home-open {
+  from {
+    transform: translate3d(0, calc(100vh + 120px), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes home-cap {
+
+  0%,
+  45% {
+    transform: scaleY(1);
+  }
+
+  100% {
+    transform: scaleY(0);
+  }
+}
+
+html[data-home-surface] {
+  scrollbar-gutter: stable;
+}
+
+/* 顶部黑色曲面携带浅色导航副本，和下方正文在 1.8s 同时收平。 */
+.navbar-reveal-copy {
+  display: none;
+}
+
+html[data-home-surface='reveal'] #root>div>header {
+  background: transparent;
+}
+
+html[data-home-surface='reveal'] .navbar-reveal-copy {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 192px;
+  background: var(--brand-black);
+  color: var(--brand-white);
+  pointer-events: none;
+  will-change: transform, clip-path;
+  animation: nav-sheet 1.15s cubic-bezier(.45, 0, .2, 1) .65s both;
+}
+
+html[data-home-surface='reveal'] .navbar-reveal-copy a,
+html[data-home-surface='reveal'] .navbar-reveal-copy button {
+  color: inherit;
+}
+
+@keyframes nav-sheet {
+  from {
+    transform: translate3d(0, -192px, 0);
+    clip-path: inset(0 0 0 0 round 0 0 50% 50%);
+  }
+
+  55% {
+    clip-path: inset(0 0 0 0 round 0 0 50% 50%);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+    clip-path: inset(0 0 80px 0 round 0);
+  }
+}
+
+.about-home {
+  background: #101010;
+  color: #f4f4f2;
+  min-height: 100vh;
+}
+
+.about-heading,
+.about-journey,
+.about-footer {
+  width: min(100% - 48px, 960px);
+  margin-inline: auto;
+}
+
+.about-heading {
+  padding-block: clamp(70px, 12vh, 140px) 30px;
+}
+
+.about-eyebrow {
+  color: #888;
+  font-size: 11px;
+  letter-spacing: .18em;
+}
+
+.about-heading h1 {
+  font-size: clamp(60px, 11vw, 132px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -.065em;
+  margin-block: 28px;
+}
+
+.about-elastic-title {
+  position: relative;
+  width: fit-content;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.about-elastic-letter,
+.about-elastic-glyph {
+  display: inline-block;
+}
+
+.about-elastic-letter {
+  transform-origin: center;
+}
+
+.about-elastic-dot {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  margin-left: .06em;
+  border: 0;
+  background: transparent;
+  color: var(--brand-green);
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.about-elastic-dot-shape {
+  display: inline-block;
+  transform-origin: left 85%;
+}
+
+.about-elastic-dot::after {
+  content: '';
+  position: absolute;
+  inset: 45% -14px -10px;
+}
+
+.about-elastic-dot[data-dragging] {
+  cursor: grabbing;
+}
+
+.about-elastic-dot:focus-visible {
+  outline: 2px solid var(--brand-green);
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+
+.about-lead {
+  color: #b2b2b2;
+  font-size: clamp(16px, 2vw, 21px);
+  line-height: 1.9;
+}
+
+.about-scroll {
+  display: inline-flex;
+  gap: 35px;
+  margin-top: 64px;
+  font-size: 21px;
+  color: #aaa;
+}
+
+.about-journey {
+  padding-block: 32px 70px;
+  scroll-margin-top: 130px;
+}
+
+.about-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 35px;
+  font-size: 18px;
+  color: #888;
+}
+
+.about-home a:hover {
+  color: var(--brand-green);
+}
+
+.about-home a:focus-visible,
+.home-skip:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .home-welcome>span,
+  .home-curtain,
+  .home-curtain::before,
+  .navbar-reveal-copy {
+    animation-duration: .01ms;
+    animation-delay: 0ms;
+  }
+}
+
+html[data-home-surface='dark'] #root header {
+  background: #101010;
+}

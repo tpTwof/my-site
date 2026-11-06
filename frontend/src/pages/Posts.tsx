@@ -18,6 +18,7 @@ import { getPosts, getTags, errorMessage } from '@/lib/api'
 import type { PostSummary, TagCount } from '@/types/post'
 import { PostCardList } from '@/components/ui/post-card-list'
 import { TagSidebar } from '@/components/ui/tag-sidebar'
+import { PostCategoryHeading } from '@/components/post-category-heading'
 
 export default function Posts() {
   const [params, setParams] = useSearchParams()
@@ -27,6 +28,7 @@ export default function Posts() {
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [tags, setTags] = useState<TagCount[]>([])
   const [total, setTotal] = useState(0)
+  const [tagsReady, setTagsReady] = useState(false)
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +41,7 @@ export default function Posts() {
       .then((data) => {
         setTags(data.items)
         setTotal(data.total)
+        setTagsReady(true)
       })
       .catch((err) => setError(errorMessage(err, '标签加载失败')))
   }, [])
@@ -126,6 +129,10 @@ export default function Posts() {
         onSearch={submitSearch}
       />
 
+      <PostCategoryHeading
+        name={activeTag ? tags.find((tag) => tag.slug === activeTag)?.name ?? activeTag : 'All'}
+        count={tagsReady ? (activeTag ? tags.find((tag) => tag.slug === activeTag)?.count ?? 0 : total) : null}
+      />
       <PostCardList posts={posts} />
 
       <div ref={loaderRef} className="py-8 text-center text-sm text-muted-foreground">

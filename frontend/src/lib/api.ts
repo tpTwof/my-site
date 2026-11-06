@@ -172,3 +172,12 @@ export function updatePost(id: string, body: PostUpdate): Promise<PostDetail> {
 export function deletePost(id: string): Promise<void> {
   return request<void>(`/api/admin/posts/${id}`, { method: 'DELETE' })
 }
+
+export interface JourneyInput { text: string; date: string; image: string | null }
+export interface JourneyEntry extends JourneyInput { id: string; created_at: string }
+export const getJourney = () => request<JourneyEntry[]>('/api/journey')
+export const saveJourney = (body: JourneyInput, id?: string) => request<JourneyEntry>(
+  id ? `/api/admin/journey/${id}` : '/api/admin/journey',
+  { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) },
+)
+export const deleteJourney = (id: string) => request<void>(`/api/admin/journey/${id}`, { method: 'DELETE' })

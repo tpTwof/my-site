@@ -64,8 +64,8 @@ export function PostCardList({ posts, className }: PostCardListProps) {
             <Link
               to={`/posts/${post.slug}`}
               className={cn(
-                'no-underline visited:text-[var(--post-link)]',
-                'text-[var(--post-link)] hover:text-[var(--post-link-hover)] hover:underline',
+                'no-underline visited:text-[var(--post-accent)]',
+                'text-[var(--post-accent)] hover:text-[var(--post-accent)] hover:underline',
               )}
             >
               阅读全文 »
