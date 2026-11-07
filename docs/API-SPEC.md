@@ -99,9 +99,10 @@ HttpOnly; SameSite=Lax; Path=/`（HTTPS 下附加 `Secure`）。
 
 ### 路程图
 
-- `GET /api/journey`：公开读取全部路程，按创建时间、ID 升序返回数组。
+- `GET /api/journey`：公开读取全部路程，按创建时间、ID 升序返回数组。传入 `inline_images=false` 时，内嵌照片用同源图片地址表示。
+- `GET /api/journey/{id}/image`：公开读取该路程的内嵌照片。无内嵌照片或无法解码时返回 404。
 - `POST /api/admin/journey`：管理员新建，成功返回 201 与记录。
-- `PUT /api/admin/journey/{id}`：管理员完整更新文字、日期与图片，返回 200；不存在返回 404。
+- `PUT /api/admin/journey/{id}`：管理员完整更新文字、日期与图片，返回 200；不存在返回 404。传入 `keep_image=true` 可在更新文字、日期时保留已有照片。
 - `DELETE /api/admin/journey/{id}`：管理员删除，成功返回 204；不存在返回 404。
 - 写接口沿用 `require_auth`，未登录返回 401。
 

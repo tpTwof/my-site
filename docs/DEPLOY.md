@@ -214,9 +214,14 @@ certbot 会自动改写上面的 server 块加入 443 与跳转。签发成功�
 cd /srv/tptwo/app && sudo -u www-data git pull
 sudo -u www-data /srv/tptwo/venv/bin/pip install -r backend/requirements.txt -q
 sudo -u www-data bash -c 'cd frontend && npm ci && npm run build'
-sudo rsync -a --delete frontend/dist/ /var/www/tptwo/
 sudo systemctl restart tptwo
+curl -fsS --retry 10 --retry-connrefused --retry-delay 1 'http://127.0.0.1:8000/api/journey?inline_images=false' -o /dev/null
+sudo rsync -a --exclude=/index.html frontend/dist/ /var/www/tptwo/
+sudo install -m 644 frontend/dist/index.html /var/www/tptwo/.index-next.html
+sudo mv -f /var/www/tptwo/.index-next.html /var/www/tptwo/index.html
 ```
+
+先确认新版 API 可用，再切换前端入口。保留旧版带哈希的静态资源，供已打开的页面使用。
 
 前端一律请求相对路径 `/api/...`，无需配置后端地址，也无需设置 `VITE_API_BASE`。
 
@@ -227,6 +232,7 @@ sudo systemctl restart tptwo
 ```bash
 # 1. 公开接口可用
 curl -s https://www.tptwof.top/api/home
+curl -fsS 'https://www.tptwof.top/api/journey?inline_images=false'
 
 # 2. 管理接口未登录必须 401
 curl -s -o /dev/null -w '%{http_code}\n' https://www.tptwof.top/api/admin/posts
@@ -247,6 +253,7 @@ grep tp_admin /tmp/c.txt
 
 浏览器侧：访问 `/admin/posts` 应跳转登录页；登录后回到列表；点「登出」后
 再访问管理页又回到登录页。
+首次进入或站内返回首页后，滚到 MY JOURNEY 确认绿色流星开始播放。带图片的路程记录应先显示文字，查看节点时再请求照片。
 
 ---
 

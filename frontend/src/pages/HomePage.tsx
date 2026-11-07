@@ -51,22 +51,21 @@ export default function HomePage() {
         </div>
       )}
 
-      {(phase === 'done' || phase === 'reveal') && (
-        <div className={`about-home ${phase === 'reveal' ? 'home-curtain' : ''}`} onAnimationEnd={phase === 'reveal' ? (event) => {
-          if (event.target === event.currentTarget && event.animationName === 'home-open') setPhase('done')
-        } : undefined}>
-          <section className="about-heading">
-            <p className="about-eyebrow">THE PERSON BEHIND THE WORDS</p>
-            <ElasticAboutHeading />
-            <p className="about-lead">我是 tpTwo<br />在这里，留下一些思考与足迹</p>
-            <a className="about-scroll" href="#journey">时间长廊<span aria-hidden="true">↓</span></a>
-          </section>
-          <section id="journey" className="about-journey" aria-label="我的路程">
-            <JourneyMap />
-          </section>
-          <footer className="about-footer"><span>tpTwo / 一路向前</span><a href="#journey">↑</a></footer>
-        </div>
-      )}
+      {/* 让路程请求与开场并行，正文在揭幕前保持隐藏。 */}
+      <div hidden={phase === 'fly' || phase === 'wave'} className={`about-home ${phase === 'reveal' ? 'home-curtain' : ''}`} onAnimationEnd={phase === 'reveal' ? (event) => {
+        if (event.target === event.currentTarget && event.animationName === 'home-open') setPhase('done')
+      } : undefined}>
+        <section className="about-heading">
+          <p className="about-eyebrow">THE PERSON BEHIND THE WORDS</p>
+          <ElasticAboutHeading />
+          <p className="about-lead">我是 tpTwo<br />在这里，留下一些思考与足迹</p>
+          <a className="about-scroll" href="#journey">时间长廊<span aria-hidden="true">↓</span></a>
+        </section>
+        <section id="journey" className="about-journey" aria-label="我的路程">
+          <JourneyMap readyForMeteors={phase === 'done'} />
+        </section>
+        <footer className="about-footer"><span>tpTwo / 一路向前</span><a href="#journey">↑</a></footer>
+      </div>
     </>
   )
 }

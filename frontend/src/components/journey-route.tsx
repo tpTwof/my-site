@@ -1,11 +1,36 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import { createJourneyRoute } from '@/lib/journey-route'
 
 type Geometry = { width: number; height: number; points: { x: number; y: number; height: number }[] }
+const METEOR_INTERVAL = 3
+const METEOR_LAYERS = ['tail', 'trail', 'core', 'flare', 'head']
 
-export function JourneyRoute({ geometry, containerRef }: { geometry: Geometry; containerRef: RefObject<HTMLOListElement | null> }) {
+export function JourneyRoute({ geometry, containerRef, loading, launchMeteors }: {
+  geometry: Geometry
+  containerRef: RefObject<HTMLOListElement | null>
+  loading: boolean
+  launchMeteors: boolean
+}) {
   const tracerRef = useRef<HTMLLIElement>(null)
+  const meteorPathId = useId()
   const route = useMemo(() => createJourneyRoute(geometry.points), [geometry.points])
+  const [meteors, setMeteors] = useState<{ count: number; duration: number; tail: number }>()
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!launchMeteors || meteors || !route.length || !container) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return
+      const arrival = Math.max(4.5, route.length / 125)
+      const tail = Math.min(18, (110 / route.length) * 100)
+      // The head reaches the endpoint before the tail has fully cleared it.
+      setMeteors({ count: Math.ceil(arrival / METEOR_INTERVAL), duration: arrival * (102 + tail) / 101, tail })
+      observer.disconnect()
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [containerRef, launchMeteors, route.length, meteors])
 
   useEffect(() => {
     const container = containerRef.current
@@ -146,6 +171,17 @@ export function JourneyRoute({ geometry, containerRef }: { geometry: Geometry; c
       <li aria-hidden="true" className="map-lines">
         <svg width={geometry.width} height={geometry.height}>
           <path d={route.path} />
+          {loading && <path className="map-route-loading" d={route.path} pathLength={100} />}
+          {meteors && (
+            <g className="map-route-meteors" style={{ '--meteor-tail': `${meteors.tail}px`, '--meteor-duration': `${meteors.duration}s` } as CSSProperties}>
+              <defs><path id={meteorPathId} d={route.path} pathLength={100} /></defs>
+              {Array.from({ length: meteors.count }, (_, index) => (
+                <g key={index} className="map-route-meteor" style={{ '--meteor-delay': `${index * METEOR_INTERVAL}s` } as CSSProperties}>
+                  {METEOR_LAYERS.map(layer => <use key={layer} className={`map-meteor-${layer}`} href={`#${meteorPathId}`} />)}
+                </g>
+              ))}
+            </g>
+          )}
           <path className="map-route-hit" d={route.path} />
         </svg>
       </li>

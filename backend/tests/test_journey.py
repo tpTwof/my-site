@@ -1,3 +1,5 @@
+from base64 import b64encode
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -41,6 +43,29 @@ def test_round_trip(client):
     assert client.delete('/api/admin/journey/' + entry['id']).status_code == 204
     assert client.get('/api/journey').json() == []
     assert client.put('/api/admin/journey/x', json={'text': 'hello'}).status_code == 404
+
+
+def test_compact_journey_does_not_transfer_inline_images(client):
+    client.app.dependency_overrides[require_auth] = lambda: 'admin'
+    photo = b'\x89PNG\r\n\x1a\n' + b'x' * (1024 * 1024)
+    image = 'data:image/png;base64,' + b64encode(photo).decode('ascii')
+    entry = client.post('/api/admin/journey', json={'text': 'with photo', 'image': image}).json()
+    external = 'https://example.com/photo.jpg'
+    client.post('/api/admin/journey', json={'text': 'external', 'image': external})
+    client.post('/api/admin/journey', json={'text': 'no photo'})
+
+    listing = client.get('/api/journey?inline_images=false')
+    assert len(listing.content) < 1024
+    photo_url = f"/api/journey/{entry['id']}/image"
+    assert [row['image'] for row in listing.json()] == [photo_url, external, None]
+
+    edit_url = f"/api/admin/journey/{entry['id']}"
+    assert client.put(edit_url + '?keep_image=true', json={'text': 'updated'}).status_code == 200
+    response = client.get(photo_url)
+    assert response.headers['content-type'] == 'image/png'
+    assert response.content == photo
+    assert client.put(edit_url, json={'text': 'updated', 'image': None}).status_code == 200
+    assert client.get(photo_url).status_code == 404
 
 @pytest.mark.parametrize('body', [{'text': '  '}, {'text': 'x', 'image': 'javascript:alert(1)'}, {'text': 'x', 'image': 'data:image/svg+xml;base64,abc'}])
 def test_rejects_bad_input(client, body):

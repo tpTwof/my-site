@@ -175,9 +175,9 @@ export function deletePost(id: string): Promise<void> {
 
 export interface JourneyInput { text: string; date: string; image: string | null }
 export interface JourneyEntry extends JourneyInput { id: string; created_at: string }
-export const getJourney = () => request<JourneyEntry[]>('/api/journey')
-export const saveJourney = (body: JourneyInput, id?: string) => request<JourneyEntry>(
-  id ? `/api/admin/journey/${id}` : '/api/admin/journey',
-  { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) },
+export const getJourney = (signal: AbortSignal) => request<JourneyEntry[]>('/api/journey?inline_images=false', { signal })
+export const saveJourney = (body: JourneyInput, id?: string, keepImage = false) => request<JourneyEntry>(
+  id ? `/api/admin/journey/${id}${keepImage ? '?keep_image=true' : ''}` : '/api/admin/journey',
+  { method: id ? 'PUT' : 'POST', body: JSON.stringify(keepImage ? { text: body.text, date: body.date } : body) },
 )
 export const deleteJourney = (id: string) => request<void>(`/api/admin/journey/${id}`, { method: 'DELETE' })
