@@ -10,7 +10,7 @@
  *   POST   /api/admin/posts      → 201 PostDetail
  *   PUT    /api/admin/posts/{id} → 200 PostDetail
  *   slug 冲突时后端返回 409，此处以错误条 + toast 展示。
- * ⚠️ 管理端接口当前无鉴权，部署公网前必须补上。
+ * 管理端接口通过 httpOnly Cookie 会话鉴权。
  */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'

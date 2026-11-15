@@ -69,6 +69,7 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-1 text-muted-foreground transition-colors duration-200 ease-[ease] has-[>:is(a,button):is(:hover,:focus-visible)]:text-primary motion-reduce:transition-none sm:gap-2">
+          {username && <Link to="/admin" onClick={closeMenu} className="mr-3 text-sm">工作台</Link>}
           {username && (
             <button
               type="button"

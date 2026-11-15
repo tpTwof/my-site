@@ -1,18 +1,18 @@
 html[data-home-surface='dark'] {
-  --background: #101010;
-  --foreground: #f4f4f2;
-  --muted-foreground: #aaa;
-  --muted: #252525;
-  --border: #333;
-  --accent: #203020;
+  --background: #ffffff;
+  --foreground: #20324a;
+  --muted-foreground: #617189;
+  --muted: #f3f6fa;
+  --border: #dce5ef;
+  --accent: #edf4fc;
   --accent-foreground: var(--brand-green);
 }
 
 html[data-home-surface='light'],
 html[data-home-surface='reveal'] {
   --background: #fff;
-  --foreground: #171717;
-  --muted-foreground: #777;
+  --foreground: #20324a;
+  --muted-foreground: #617189;
 }
 
 .home-intro {
@@ -23,7 +23,7 @@ html[data-home-surface='reveal'] {
   place-items: center;
   overflow: hidden;
   background: #fff;
-  color: #171717;
+  color: #20324a;
 }
 
 .home-welcome {
@@ -84,7 +84,7 @@ html[data-home-surface='reveal'] {
   position: absolute;
   bottom: 28px;
   right: 28px;
-  color: #777;
+  color: #617189;
   font-size: 12px;
   cursor: pointer;
   padding: 12px;
@@ -108,7 +108,7 @@ html[data-home-surface='reveal'] {
   top: -120px;
   height: 121px;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background: #101010;
+  background: #ffffff;
   transform-origin: bottom;
   animation: home-cap 1.8s cubic-bezier(.45, 0, .2, 1) both;
 }
@@ -155,8 +155,8 @@ html[data-home-surface='reveal'] .navbar-reveal-copy {
   left: 0;
   right: 0;
   height: 192px;
-  background: var(--brand-black);
-  color: var(--brand-white);
+  background: var(--background);
+  color: var(--foreground);
   pointer-events: none;
   will-change: transform, clip-path;
   animation: nav-sheet 1.15s cubic-bezier(.45, 0, .2, 1) .65s both;
@@ -184,8 +184,8 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
 }
 
 .about-home {
-  background: #101010;
-  color: #f4f4f2;
+  background: #ffffff;
+  color: #20324a;
   min-height: 100vh;
 }
 
@@ -201,7 +201,7 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
 }
 
 .about-eyebrow {
-  color: #888;
+  color: #617189;
   font-size: 11px;
   letter-spacing: .18em;
 }
@@ -269,7 +269,7 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
 }
 
 .about-lead {
-  color: #b2b2b2;
+  color: #617189;
   font-size: clamp(16px, 2vw, 21px);
   line-height: 1.9;
 }
@@ -279,7 +279,7 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
   gap: 35px;
   margin-top: 64px;
   font-size: 21px;
-  color: #aaa;
+  color: #617189;
 }
 
 .about-journey {
@@ -293,11 +293,11 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
   gap: 20px;
   padding-block: 35px;
   font-size: 18px;
-  color: #888;
+  color: #617189;
 }
 
 .about-home a:hover {
-  color: var(--brand-green);
+  color: var(--brand-red);
 }
 
 .about-home a:focus-visible,
@@ -318,5 +318,5 @@ html[data-home-surface='reveal'] .navbar-reveal-copy button {
 }
 
 html[data-home-surface='dark'] #root header {
-  background: #101010;
+  background: #ffffff;
 }

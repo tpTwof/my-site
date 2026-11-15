@@ -1,7 +1,7 @@
 /**
  * [前端 · 页面] 路由 `/login` — 管理端登录。
  *
- * 登录成功后跳到 state.from（被守卫拦下的原地址），没有则去 /admin/posts。
+ * 登录成功后跳到 state.from（被守卫拦下的原地址），没有则去 /admin。
  * 已登录时访问本页会直接跳走。
  *
  * 后端关联：POST /api/auth/login { username, password }
@@ -26,7 +26,7 @@ export default function Login() {
   const { username, ready, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as LocationState | null)?.from ?? '/admin/posts'
+  const from = (location.state as LocationState | null)?.from ?? '/admin'
 
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -60,7 +60,7 @@ export default function Login() {
       >
         <div>
           <h1 className="m-0 text-xl font-bold tracking-tight">管理端登录</h1>
-          <p className="mt-1 text-sm text-muted-foreground">登录后可写作与发布文章</p>
+          <p className="mt-1 text-sm text-muted-foreground">管理文章、交互讲解与作品集</p>
         </div>
 
         <ErrorBanner message={error} />

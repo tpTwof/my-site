@@ -7,7 +7,7 @@
  * 后端关联：
  *   GET    /api/admin/posts?limit=&status=  → PostSummaryList（含草稿，无正文）
  *   DELETE /api/admin/posts/{id}            → 204
- * ⚠️ 管理端接口当前无鉴权，部署公网前必须补上。
+ * 管理端接口通过 httpOnly Cookie 会话鉴权。
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -43,8 +43,12 @@ export default function AdminPostList() {
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const hasLoadedOnce = useRef(false)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const requestVersion = useRef(0)
 
   const load = useCallback(async (nextFilter: Filter) => {
+    const version = ++requestVersion.current
     if (hasLoadedOnce.current) setRefreshing(true)
     setError(null)
     try {
@@ -54,15 +58,33 @@ export default function AdminPostList() {
         50,
         nextFilter === 'all' ? undefined : nextFilter,
       )
+      if (version !== requestVersion.current) return
       setPosts(data.items)
+      setNextCursor(data.next_cursor)
     } catch (err) {
+      if (version !== requestVersion.current) return
       setError(errorMessage(err, '加载失败'))
     } finally {
+      if (version === requestVersion.current) {
       hasLoadedOnce.current = true
       setInitialLoading(false)
       setRefreshing(false)
+      }
     }
   }, [])
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore || refreshing) return
+    const version = requestVersion.current
+    setLoadingMore(true)
+    try {
+      const data = await getAdminPosts(nextCursor, 50, filter === 'all' ? undefined : filter)
+      if (version !== requestVersion.current) return
+      setPosts(items => [...items, ...data.items])
+      setNextCursor(data.next_cursor)
+    } catch (err) { if (version === requestVersion.current) setError(errorMessage(err)) }
+    finally { setLoadingMore(false) }
+  }
 
   useEffect(() => {
     load(filter)
@@ -101,7 +123,7 @@ export default function AdminPostList() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="m-0 text-2xl font-bold tracking-tight">文章管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">共 {posts.length} 篇</p>
+          <p className="mt-1 text-sm text-muted-foreground">已显示 {posts.length} 篇{nextCursor ? ' · 还有更多文章' : ''}</p>
         </div>
         <Link to="/admin/posts/new" className={buttonVariants()}>
           <Plus className="size-4" />
@@ -140,6 +162,7 @@ export default function AdminPostList() {
           />
         ))}
       </ul>
+      {nextCursor && <button className="studio-button" disabled={loadingMore || refreshing} onClick={loadMore}>{loadingMore ? '加载中…' : '加载更多文章'}</button>}
     </div>
   )
 }

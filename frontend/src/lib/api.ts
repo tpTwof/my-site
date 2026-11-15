@@ -22,6 +22,7 @@ import type {
   PublicPostDetail,
   TagList,
 } from '@/types/post'
+import type { Work, WorkInput, Overview } from '@/types/work'
 
 /** 相对路径前缀。开发/生产都由反向代理把 /api 转给后端，故恒为空串。 */
 const BASE = ''
@@ -181,3 +182,19 @@ export const saveJourney = (body: JourneyInput, id?: string, keepImage = false) 
   { method: id ? 'PUT' : 'POST', body: JSON.stringify(keepImage ? { text: body.text, date: body.date } : body) },
 )
 export const deleteJourney = (id: string) => request<void>(`/api/admin/journey/${id}`, { method: 'DELETE' })
+
+export const getWorks = () => request<Work[]>('/api/works')
+export const getWork = (slug: string) => request<Work>(`/api/works/${encodeURIComponent(slug)}`)
+export const getAdminWorks = () => request<Work[]>('/api/admin/works')
+export const getAdminWork = (id: string) => request<Work>(`/api/admin/works/${id}`)
+export const getOverview = () => request<Overview>('/api/admin/overview')
+export const saveWork = (body: WorkInput, id?: string) => request<Work>(
+  id ? `/api/admin/works/${id}` : '/api/admin/works',
+  { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) },
+)
+export const deleteWork = (id: string) => request<void>(`/api/admin/works/${id}`, { method: 'DELETE' })
+export const createWorkPreview = (id: string) => request<{ url: string }>(`/api/admin/works/${id}/preview`, { method: 'POST', body: '{}' })
+export const uploadWork = (id: string, file: File) => request<Work>(
+  `/api/admin/works/${id}/package?filename=${encodeURIComponent(file.name)}`,
+  { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream', 'X-Upload-Intent': 'work-package' }, body: file },
+)

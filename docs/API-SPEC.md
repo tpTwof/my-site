@@ -1,6 +1,6 @@
 # tpTwo 站点接口规范
 
-> **当前阶段范围**: 站点入口、博客文章 CRUD、标签分类、管理端登录鉴权及日常路程管理
+> **当前阶段范围**: 站点入口、博客文章 CRUD、标签分类、管理端登录鉴权、日常路程、作品与静态 HTML 讲解管理
 > **明确排除**: 多用户/注册、评论、统计、全文搜索与独立媒体上传服务；路程图片通过记录的 `image` 字段保存
 
 ---
@@ -12,7 +12,7 @@
 | 站点接口前缀 | `/api` |
 | 鉴权接口前缀 | `/api/auth` |
 | 公开博客接口前缀 | `/api/posts` |
-| 管理接口前缀 | `/api/admin/posts`、`/api/admin/journey`（**需登录**） |
+| 管理接口前缀 | `/api/admin/posts`、`/api/admin/journey`、`/api/admin/works`、`/api/admin/overview`（**需登录**） |
 | 标签接口前缀 | `/api/tags` |
 | 路程接口前缀 | `/api/journey` |
 | 数据格式 | JSON, UTF-8 |
@@ -352,3 +352,29 @@ backend/
 - 🔍 全文搜索
 - 🖼️ 独立图片上传 / 媒体管理（路程已有单张图片字段，封面图已确认不做）
 - 👥 多用户 / 注册（当前是单管理员，账号来自环境变量）
+
+
+## Works 与 HTML 讲解
+
+完整设计见 [CONTENT-STUDIO.md](CONTENT-STUDIO.md)。作品元数据和文件保存在 SQLite，文件内容不出现在列表响应中。
+
+| 方法 | 路径 | 行为 |
+|---|---|---|
+| GET | `/api/works` | 已发布作品，推荐优先、创建时间降序 |
+| GET | `/api/works/{slug}` | 已发布作品详情；草稿 / 不存在返回 404 |
+| GET | `/api/works/{slug}/files/{path}` | 已发布静态文件；每次检查发布状态 |
+| GET / POST | `/api/admin/works` | 管理列表 / 创建草稿（201） |
+| GET / PUT / DELETE | `/api/admin/works/{id}` | 详情 / 全量元数据更新 / 删除（204，包含文件与预览凭证） |
+| PUT | `/api/admin/works/{id}/package?filename=...` | 原始二进制上传，`X-Upload-Intent: work-package` 必填 |
+| POST | `/api/admin/works/{id}/preview` | 登录后创建 30 分钟预览凭证，返回 `{url}`，no-store |
+| GET | `/api/work-preview/{token}/{path}` | 限定单作品的只读预览，检查有效期和原登录会话 |
+| GET | `/api/admin/works/{id}/files/{path}` | Cookie 鉴权读取文件，不作为沙箱子资源入口 |
+| GET | `/api/admin/overview` | `{posts: {draft, published}, works: {draft, published}}` |
+
+作品字段：`id`、`title`、`slug`、`description`、`category`（explainer / experiment / project）、`tags`（逗号分隔）、`status`、`featured`、`file_count`、`package_size`（解压后字节数）、`created_at`、`updated_at`。写入只接受前述元数据，不接受 id、计数和时间字段。
+
+标题去除首尾空格后不能为空，最多 160 字符；slug 最多 100 字符，只允许小写 ASCII 字母、数字与连字符；简介最多 1000 字符、标签最多 200 字符。slug 冲突返回 409，无页面时发布返回 422。创建必须为 draft。
+
+上传单 HTML 自动以 index.html 存储；ZIP 支持根入口或唯一的一层目录。最大 10 MiB 请求体，超过返回 413；解压最多 25 MiB / 200 个文件。非法 ZIP、路径穿越、重复路径、加密、软链接、非静态扩展名、缺入口与非 UTF-8 入口返回 422。校验后事务替换，失败不删除旧文件。
+
+静态资源带 CSP sandbox allow-scripts、nosniff、no-store 与 no-referrer；禁止同源权限、网络 API、子框架和表单。上传页面适用于离线 HTML / CSS / 传统 JS；不能直接运行需要外部 CDN、后端或浏览器存储的应用。

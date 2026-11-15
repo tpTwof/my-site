@@ -62,7 +62,7 @@ export default function HomePage() {
           <a className="about-scroll" href="#journey">时间长廊<span aria-hidden="true">↓</span></a>
         </section>
         <section id="journey" className="about-journey" aria-label="我的路程">
-          <JourneyMap readyForMeteors={phase === 'done'} />
+          <JourneyMap />
         </section>
         <footer className="about-footer"><span>tpTwo / 一路向前</span><a href="#journey">↑</a></footer>
       </div>

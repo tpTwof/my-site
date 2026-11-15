@@ -59,68 +59,60 @@ body {
 }
 
 :root, .dark {
-  /* 黑白为底，绿标识交互，红标识强调与危险操作。 */
-  --brand-black: #101010;
-  --brand-white: #f4f4f2;
-  --brand-green: #8df58b;
-  --brand-red: #ff6464;
-  --background: var(--brand-black);
-  --foreground: var(--brand-white);
-  --card: #191919;
+  color-scheme: light;
+  --brand-blue: #245caa;
+  --brand-black: #20324a;
+  --brand-white: #ffffff;
+  --brand-green: var(--brand-blue);
+  --brand-red: #c53f46;
+  --background: #ffffff;
+  --foreground: #20324a;
+  --card: #ffffff;
   --card-foreground: var(--foreground);
-  --popover: #191919;
+  --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --primary: var(--brand-green);
-  --primary-foreground: var(--brand-black);
-  --secondary: #262626;
-  --secondary-foreground: var(--foreground);
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #203020;
-  --accent-foreground: var(--brand-green);
+  --primary: var(--brand-blue);
+  --primary-foreground: #ffffff;
+  --secondary: #edf4fc;
+  --secondary-foreground: #245caa;
+  --muted: #f3f6fa;
+  --muted-foreground: #617189;
+  --accent: #edf4fc;
+  --accent-foreground: #245caa;
   --destructive: var(--brand-red);
-  --border: #303030;
-  --input: #3b3b3b;
-  --ring: var(--brand-green);
+  --border: #dce5ef;
+  --input: #cbd8e7;
+  --ring: var(--brand-red);
   --radius: 0.625rem;
-  --post-link: var(--brand-green);
-  --post-link-hover: var(--brand-white);
-  --post-accent: var(--brand-red);
+  --post-link: var(--brand-blue);
+  --post-link-hover: var(--brand-red);
+  --post-accent: var(--brand-blue);
   --post-muted: var(--muted-foreground);
   --post-body: var(--foreground);
   --post-rule: var(--border);
-  --lamp-rope: var(--brand-white);
-  --lamp-bead: var(--brand-white);
-  --lamp-outline: #666666;
-  --chart-1: var(--brand-green);
+  --lamp-rope: var(--brand-blue);
+  --lamp-bead: var(--brand-blue);
+  --lamp-outline: var(--border);
+  --chart-1: var(--brand-blue);
   --chart-2: var(--brand-red);
-  --chart-3: var(--brand-white);
-  --chart-4: #808080;
-  --chart-5: #404040;
-  --sidebar: var(--background);
+  --chart-3: #7398c7;
+  --chart-4: #617189;
+  --chart-5: #dce5ef;
+  --sidebar: #f7faff;
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--brand-green);
-  --sidebar-primary-foreground: var(--brand-black);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--brand-green);
+  --sidebar-accent-foreground: var(--primary);
   --sidebar-border: var(--border);
-  --sidebar-ring: var(--brand-green);
+  --sidebar-ring: var(--ring);
 }
 
-::selection { background: var(--brand-green); color: var(--brand-black); }
-[data-reading-page] {
-  --brand-green: var(--brand-white);
-  --post-link: var(--brand-white);
-  --post-link-hover: var(--brand-white);
-  --primary: var(--brand-white);
-  --ring: var(--brand-white);
-  --accent: #262626;
-  --accent-foreground: var(--brand-white);
-}
+::selection { background: #dbeafe; color: #20324a; }
 .prose a { color: var(--brand-green); text-decoration-color: currentColor; }
-.prose a:hover { color: var(--brand-white); }
+.prose a:hover { color: var(--brand-red); }
 .prose blockquote { border-left-color: var(--brand-red); }
-.prose pre, .prose .hljs { background: #191919; color: var(--brand-white); }
+.prose pre, .prose .hljs { background: #f3f6fa; color: var(--foreground); }
 .prose .hljs-keyword, .prose .hljs-selector-tag, .prose .hljs-deletion,
 .prose .hljs-literal, .prose .hljs-number { color: var(--brand-red); }
 .prose .hljs-string, .prose .hljs-title, .prose .hljs-addition,
@@ -128,7 +120,7 @@ body {
 .prose .hljs-regexp, .prose .hljs-meta { color: var(--brand-green); }
 .prose .hljs-comment, .prose .hljs-quote { color: var(--muted-foreground); }
 .prose .hljs-variable, .prose .hljs-params, .prose .hljs-subst,
-.prose .hljs-name, .prose .hljs-tag, .prose .hljs-type { color: var(--brand-white); }
+.prose .hljs-name, .prose .hljs-tag, .prose .hljs-type { color: var(--foreground); }
 
 @layer base {
   * {
@@ -141,3 +133,7 @@ body {
     @apply font-sans;
   }
 }
+
+:where(a, button):focus-visible { outline: 2px solid var(--brand-red); outline-offset: 4px; }
+:where(a, button):hover { color: var(--brand-red); }
+#root > div > header { background: #ffffff; border-bottom: 1px solid var(--border); }

@@ -53,7 +53,7 @@ const INTRO: JourneyPointEntry[] = [
   { id: 'intro-reading', date: '02 / ', title: 'READER', text: 'Stay curious. Keep learning.', image: null, created_at: '' },
   { id: 'intro-gaming', date: '03 / ', title: 'GAMER', text: 'Level up. Another window into interaction.', image: null, created_at: '' },
 ]
-export function JourneyMap({ readyForMeteors }: { readyForMeteors: boolean }) {
+export function JourneyMap() {
   const { username } = useAuth()
   const [entries, setEntries] = useState<JourneyEntry[]>([])
   const allEntries = useMemo(() => [...INTRO, ...entries], [entries])
@@ -140,8 +140,7 @@ export function JourneyMap({ readyForMeteors }: { readyForMeteors: boolean }) {
         <div className="map-form-buttons"><Button disabled={busy || reading} type="submit">{busy ? '保存中…' : '保存路程'}</Button><Button disabled={busy} variant="ghost" type="button" onClick={() => setEditing(undefined)}>取消</Button></div>
       </form>}
       <ol ref={boxRef} className="map-route" data-loading={loading || undefined} aria-busy={loading} style={{ height: geometry.height }}>
-        <JourneyRoute geometry={geometry} containerRef={boxRef} loading={loading}
-          launchMeteors={readyForMeteors && !loading && geometry.points.length === allEntries.length} />
+        <JourneyRoute geometry={geometry} containerRef={boxRef} loading={loading} />
         {allEntries.map((entry, index) => <JourneyPoint key={entry.id} entry={entry} index={index} admin={!!username && index >= INTRO.length}
           x={geometry.points[index]?.x ?? 0} y={geometry.points[index]?.y ?? 0}
           onEdit={() => { setEditing(entry.id); setDraft({ text: entry.text, date: entry.date, image: entry.image }) }} onDelete={() => void remove(entry)} />)}

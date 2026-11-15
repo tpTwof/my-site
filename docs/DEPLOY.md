@@ -253,7 +253,7 @@ grep tp_admin /tmp/c.txt
 
 浏览器侧：访问 `/admin/posts` 应跳转登录页；登录后回到列表；点「登出」后
 再访问管理页又回到登录页。
-首次进入或站内返回首页后，滚到 MY JOURNEY 确认绿色流星开始播放。带图片的路程记录应先显示文字，查看节点时再请求照片。
+首次进入或站内返回首页后，滚到时间长廊确认不再自动播放流星，节点拖动和悬停仍可用。带图片的路程记录应先显示文字，查看节点时再请求照片。
 
 ---
 
@@ -282,3 +282,17 @@ sqlite3 /srv/tptwo/data/blog.db ".backup '/srv/tptwo/data/backup-$(date +%F).db'
 ```
 
 建议加个每日 cron。因为 SQLite 是单文件，备份就是拷一份快照。
+
+
+## 八、升级作品集与内容工作台
+
+1. 先对 SQLite 执行上方 `.backup`，部署完整 backend（包括 `backend/content/react-explained/`）和新的前端 dist。
+2. 重启 FastAPI，`create_all` 仅新增 works、work_files、content_imports、work_previews 表，不改动原文章表。
+3. 首次启动自动导入 ReAct 已发布作品；content_imports 记录导入完成。后续重启不会覆盖编辑、重新发布草稿或恢复已删除作品。
+4. nginx 的 server / `/api/` 上传配置应设置 `client_max_body_size 11m;`；应用本身仍限制 10 MiB。维持 `/api` 原路径代理，不对作品资源设置额外缓存或移除 CSP 响应头。
+5. 检查 `/works`、`/works/react-explained`、`/login` → `/admin`，并测试添加作品、上传 HTML / ZIP、草稿预览、发布和下架。
+6. 数据库备份包含全部上传静态文件，无需单独上传目录。删除文件后 SQLite 可能保留已分配空间供重用。
+
+预览 URL 含限时只读凭证。生产访问日志应对 `/api/work-preview/` 路径脱敏或禁用，避免记录完整凭证；uvicorn 可使用 `--no-access-log`，nginx 对该前缀关闭 access_log，并保留与现有 `/api/` 相同的 proxy_pass / 转发头。预览 no-store，凭证 30 分钟过期，登出立即失效。
+
+本次本地验证使用独立预览数据库与测试账号，不需要修改现有管理员配置或清空正式数据。此文档记录部署步骤，不表示已部署线上服务器。

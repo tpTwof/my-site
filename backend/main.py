@@ -7,7 +7,8 @@ from sqlmodel import Session
 from config import ConfigError, admin_password_hash, cors_origins, summary
 from crud import auth as auth_crud
 from database import engine, init_db
-from routers import admin, auth, posts, tags, journey
+from routers import admin, auth, posts, tags, journey, works
+from seed_works import seed_works
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ async def lifespan(app: FastAPI):
     init_db()
     with Session(engine) as session:
         purged = auth_crud.purge_expired(session)
+        seed_works(session)
     if purged:
         print(f"[auth] 清理过期会话 {purged} 条", flush=True)
     yield
@@ -49,6 +51,9 @@ app.include_router(posts.router)
 app.include_router(tags.router)
 app.include_router(admin.router)
 app.include_router(journey.router)
+app.include_router(works.router)
+app.include_router(works.admin_router)
+app.include_router(works.preview_router)
 
 
 @app.get("/api/home")
@@ -62,4 +67,5 @@ def home():
 
 @app.get("/")
 def root():
-    return {"message": "Blog API is running. Visit /docs for interactive docs."}
+    return {"message": "Blog++++++0"
+    ".3 +++API is running. Visit /docs for interactive docs."}

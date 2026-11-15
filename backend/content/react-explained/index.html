@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReAct 怎样运行</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<aside><a class="brand" href="#">ReAct<span>从循环到一条消息</span></a><nav><a href="#overview">整体怎样运转</a><a href="#replay">看一题跑三步</a><a href="#format">格式有没有标准</a><a href="#structures">程序里存什么</a><a href="#code">循环代码怎么写</a><a href="#files">对应实验文件</a></nav><small>交互式讲解<br>内嵌已保存的真实运行记录</small></aside>
+<main>
+<header id="overview"><p class="eyebrow">REASONING + ACTING</p><h1>模型决定下一步，<br><em>程序执行，再把结果交回来。</em></h1><p class="lead">ReAct 是一种组织模型与工具交互的方法。你写一个循环，让模型依据已有信息选择动作，执行工具，将真实结果放回对话，直到模型提交答案。</p></header>
+<section class="diagram" aria-label="ReAct运行流程"><div>输入问题<small>程序构造初始消息</small></div><b>→</b><div class="model">模型生成<small>Thought + Action</small></div><b>→</b><div>程序解析动作<small>检查 JSON 与字段</small></div><b>→</b><div class="tool">执行工具<small>得到 Observation</small></div><p class="return">↳ 把动作与观察加入消息历史 → 再次调用模型</p></section>
+<div class="note">遇到 <code>Finish</code> 就取出答案并退出。解析失败会把错误交回模型。达到本实验的 6 步上限仍未提交，则记录 <code>step_limit</code>。</div>
+<section id="replay"><h2>看一题怎样跑三步</h2><div class="help-links"><button data-help="origin">这条消息从哪里来？</button><button data-help="tools">tool 是谁选的？</button><button data-help="answer">answer 何时出现？</button></div><p>问题 → 1991 年收购 Euromarché 的连锁企业，在 2016 年底有多少家大型超市？</p><div class="controls"><button id="prev">← 上一步</button><span id="progress" aria-live="polite"></span><button id="next">下一步 →</button></div><div class="split"><article><h3 id="action-label">模型输出</h3><pre><code id="action"></code></pre></article><article><h3 id="obs-label">程序返回</h3><button class="inline-help" data-help="execute">追踪 execute 的输入与返回 ↗</button><p id="explanation"></p><pre><code id="observation"></code></pre></article></div><details><summary>展开这一轮发给模型的完整 messages</summary><p>以下是保存的请求原文。新一轮包含之前的动作与工具结果。</p><pre><code id="messages"></code></pre></details><p class="caption">切换步骤只浏览保存的日志。此页面没有发起模型请求。第三步答案 1462，参考答案 1,462，去掉逗号后 EM = 1。</p></section>
+<section id="format"><h2>格式有没有标准？</h2><p><strong>原论文定义了交替推理与行动的流程，作者代码给出了文本格式。ReAct 本身没有要求所有实现共享一套 JSON 字段。</strong>本实验选择 JSON，便于 Python 校验与分发工具。</p><div class="split"><article><h3>作者实现使用的文本约定</h3><pre><code>Thought 1: 需要先确定收购方。
+Action 1: Search[Euromarché]
+Observation 1: 收购方是 Carrefour。
+Thought 2: 接下来查超市数量。
+Action 2: Search[Carrefour]
+Observation 2: 2016 年底有 1,462 家。
+Action 3: Finish[1462]</code></pre><p>上面用同一道题示意文本格式。作者 HotpotQA 代码生成 Thought 和 Action，由 Python 环境产生 Observation，再拼回提示。</p></article><article><h3>本实验的动作协议</h3><pre><code>{
+  "thought": "先确定收购方",
+  "tool": "Search",
+  "query": "Euromarché"
+}</code></pre><p><code>thought</code> 是公开的简短行动理由，<code>tool</code> 指定工具，<code>query</code> 是参数。字段由实验程序定义。</p></article></div><table><thead><tr><th>概念</th><th>作用</th><th>本实验中的位置</th></tr></thead><tbody><tr><td>ReAct</td><td>控制“观察后再决定动作”的方法</td><td>react() 循环</td></tr><tr><td>JSON</td><td>表达结构化数据的通用格式</td><td>模型回复正文、数据与结果文件</td></tr><tr><td>messages</td><td>聊天接口的角色与正文列表</td><td>每次 API 请求的输入</td></tr><tr><td>工具调用接口</td><td>一些服务提供专用的工具名、参数和结果字段</td><td>本实验用普通正文 JSON + Python 分发</td></tr></tbody></table><p>其他框架也可用原生工具调用表达动作。具体字段随 API 而定。用哪一种传输格式，都需要程序执行工具、保存观察并组织下一轮输入。</p><a href="https://github.com/ysymyth/ReAct/blob/master/hotpotqa.ipynb" target="_blank" rel="noreferrer">查看作者 HotpotQA 实现 ↗</a></section>
+<section id="structures"><h2>把程序中的数据分清楚</h2><div class="help-links"><button data-help="environment">env 对象里有什么？</button><button data-help="search">Search 如何计算排名？</button></div><p>一次循环可以跟踪四个变量。点开每种结构，查看它由谁产生、交给谁使用。</p><div id="tabs" class="tabs" role="group" aria-label="选择数据结构"><button data-kind="messages">messages · 对话</button><button data-kind="action">action · 动作</button><button data-kind="evidence">evidence · 证据</button><button data-kind="trace">trace · 轨迹</button></div><p id="structure-help"></p><pre><code id="structure-code"></code></pre><h3>三个动作的完整字段</h3><pre><code>{"thought":"需要找实体","tool":"Search","query":"Carrefour"}
+{"thought":"检查数量","tool":"Lookup","query":"2016","source":"E1"}
+{"thought":"E1给出了数量","tool":"Finish","answer":"1462"}</code></pre><p>这三行是独立的协议示例。Search 创建证据号；Lookup 查已经保存的证据；Finish 结束循环。<code>source</code> 必须引用已有证据才会命中。解析器要求所有字段为非空字符串，并检查字段集合。</p><div class="note"><strong>Search 怎么工作？</strong>在该题候选资料中按「标题重合词数 × 3 + 正文重合词数」排序，返回第一条的前五句，最多 1,500 字符。Lookup 只能查询此前已经返回的片段。</div></section>
+<section id="code"><h2>代码就是这个循环</h2><div class="help-links"><button data-help="parameters">react 的四个参数</button><button data-help="syntax">if memory:content 是什么语法？</button><button data-help="simplified">solve 与 react 有什么差别？</button></div><p>下面是便于阅读的流程骨架。<code>client</code> 负责 API，<code>env</code> 负责本地工具。原项目还记录轨迹、阶段和步数提醒。</p><pre><code>def solve(question, titles, env, client, instruction):
+    # 1. 构造模型可见的初始信息
+    messages = [{"role": "user", "content":
+                 instruction + question + str(titles)}]
+
+    for step in range(6):
+        # 2. 模型根据截至当前的消息生成一个动作
+        raw = client.call(messages)
+        messages.append({"role": "assistant", "content": raw})
+
+        try:
+            # 3. 解析并校验工具名、参数和字段类型
+            action = parse_react_action(raw)
+            if action["tool"] == "Finish":
+                return action["answer"]
+
+            # 4. Python 执行 Search 或 Lookup
+            evidence_id, result = env.execute(action)
+            observation = evidence_id + ": " + result
+        except (ValueError, KeyError, TypeError) as error:
+            observation = "Invalid action: " + str(error)
+
+        # 5. 下次调用带上实际结果，让模型继续决定
+        messages.append({"role": "user", "content": observation})
+
+    return None  # 上限已到，仍无答案</code></pre><p class="caption">教学骨架中的 client.call 签名经过简化。下方可展开实际运行的完整函数。</p><details><summary>查看实验 methods.py 中的真实 react() 函数</summary><pre><code id="real-code"></code></pre></details><div class="split"><article><h3>为什么每次都传 messages？</h3><p>本实验每次请求都显式携带历史。第一轮含问题和标题，第二轮再加入第一次动作与 E1，第三轮再加入第二次动作与 E2。模型因此可以根据新资料改变下一步。</p></article><article><h3>谁负责停止？</h3><p>模型可以选择 Finish，程序检查答案后返回。六步上限由 Python 强制执行。最后一步的提示只是提醒，模型仍可能继续选择 Search。</p></article></div></section>
+<section id="files"><h2>对照实验结构</h2><p>以下为原实验项目中的文件名，帮助理解代码分工；在线讲解已内嵌回放数据，不需要访问本地文件。</p><div class="file-flow"><code>run.py</code> → <code>methods.react()</code> → <code>Client.call()</code> → <code>EvidenceTools.execute()</code> → 回到循环 → <code>metrics.score()</code></div><table><thead><tr><th>想看什么</th><th>原实验文件</th></tr></thead><tbody><tr><td>提示、动作校验、完整循环</td><td><code>methods.py</code></td></tr><tr><td>HTTP 请求、超时与重试</td><td><code>client.py</code></td></tr><tr><td>工具输入怎样变成真实观察</td><td><code>tools.py</code></td></tr><tr><td>答案如何得分</td><td><code>metrics.py</code></td></tr><tr><td>本文的三步真实轨迹</td><td><code>样本 JSON</code></td></tr><tr><td>环境、命令、复算方法</td><td><code>README.md</code></td></tr></tbody></table><p>本实验用 MiniMax-M2.5 远程生成动作，本地 Python 执行工具。正式 20 题中 ReAct 的 EM 为 12/20，全文基线为 10/20。两题分差来自答案形式，评价时需要连同原始回复一起解释。</p></section>
+<footer><a href="https://arxiv.org/abs/2210.03629v3">ReAct 原论文</a><span>本页基于本地实验代码与真实日志；英文原文保留在交互面板中。</span></footer>
+</main>
+<dialog id="help-dialog" aria-labelledby="help-title">
+<div class="help-header"><button id="help-back" type="button">← 返回上个解释</button><button id="help-close" type="button" aria-label="关闭解释">关闭 ×</button></div>
+<h2 id="help-title"></h2><div id="help-body"></div><div id="help-related" class="help-links"></div>
+</dialog><script src="data.js"></script><script src="app.js"></script><script src="help.js"></script></body></html>

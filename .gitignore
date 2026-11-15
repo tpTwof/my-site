@@ -2,17 +2,23 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
 build/
 .pytest_cache/
-# pytest 的 tmp_path 残留
+# 构建产物（node_modules / dist 在任意层级）
+node_modules/
+dist/
+dist-ssr/
+# pytest 的 tmp_path 残留，以及本地 QA 夹具、一次性发布包
 tmp*/
+tmp-*/
 
 # Virtual environment
 .venv/
 
-# 环境变量文件（含口令哈希，绝不能提交）
+# 环境变量文件（含口令哈希，绝不能提交）；保留模板
 .env
+.env.*
+!.env.example
 .env.local
 
 # IDE

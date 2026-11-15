@@ -16,6 +16,11 @@ import { Navbar } from '@/components/navbar'
 import { Toaster } from '@/components/ui/sonner'
 import HomePage from '@/pages/HomePage'
 import Works from '@/pages/Works'
+import WorkDetail from '@/pages/WorkDetail'
+import AdminLayout from '@/pages/admin/AdminLayout'
+import AdminOverview from '@/pages/admin/AdminOverview'
+import AdminWorkList from '@/pages/admin/AdminWorkList'
+import AdminWorkEdit from '@/pages/admin/AdminWorkEdit'
 import Contact from '@/pages/Contact'
 import Posts from '@/pages/Posts'
 import PostDetail from '@/pages/PostDetail'
@@ -37,49 +42,37 @@ function AppLayout() {
   const { pathname } = useLocation()
   const isHome = pathname === '/' || pathname === '/home'
   /** 带标签侧栏、需要突破正文容器的页面 */
-  const isWide = pathname === '/posts' || pathname.startsWith('/tags/')
+  const isAdmin = pathname.startsWith('/admin')
+  const isWide = pathname === '/posts' || pathname.startsWith('/tags/') || pathname.startsWith('/works')
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+      {!isAdmin && <Navbar />}
       <main
-        className={isHome ? '' : isWide ? WIDE : CONTENT}
+        className={isHome || isAdmin ? '' : isWide ? WIDE : CONTENT}
         data-reading-page={pathname.startsWith('/posts') || pathname.startsWith('/tags/') ? '' : undefined}
       >
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/works" element={<Works />} />
+          <Route path="/works/:slug" element={<WorkDetail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
           <Route path="/tags/:slug" element={<PostTags />} />
           <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/admin/posts"
-            element={
-              <RequireAuth>
-                <AdminPostList />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin/posts/new"
-            element={
-              <RequireAuth>
-                <AdminPostEdit />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin/posts/:id/edit"
-            element={
-              <RequireAuth>
-                <AdminPostEdit />
-              </RequireAuth>
-            }
-          />
+          <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
+            <Route index element={<AdminOverview />} />
+            <Route path="posts" element={<AdminPostList />} />
+            <Route path="posts/new" element={<AdminPostEdit />} />
+            <Route path="posts/:id/edit" element={<AdminPostEdit />} />
+            <Route path="works" element={<AdminWorkList />} />
+            <Route path="works/new" element={<AdminWorkEdit key="new" />} />
+            <Route path="works/:id/edit" element={<AdminWorkEdit />} />
+          </Route>
+          <Route path="*" element={<div className="studio-empty">页面不存在。<a href="/works">返回作品集</a></div>} />
         </Routes>
       </main>
       <Toaster position="bottom-right" richColors closeButton />
